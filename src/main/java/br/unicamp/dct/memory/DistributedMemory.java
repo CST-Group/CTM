@@ -30,7 +30,7 @@ public class DistributedMemory implements Memory {
 
     private Logger logger;
 
-    public DistributedMemory(String name, String brokers, List<TopicConfig> topics) {
+    public DistributedMemory(String name, String brokers, DistributedMemoryType type, List<TopicConfig> topics) {
         memorySetup(name, brokers, type, topics);
     }
 
@@ -62,7 +62,7 @@ public class DistributedMemory implements Memory {
         any.close();
 
         return foundTopics.stream().map(topic -> new
-                TopicConfig(topic, DistributedMemoryBehavior.PULLED, DistributedMemoryType.INPUT_MEMORY)
+                TopicConfig(topic, DistributedMemoryBehavior.PULLED)
         ).collect(Collectors.toList());
     }
 
@@ -71,7 +71,7 @@ public class DistributedMemory implements Memory {
             final KafkaConsumer<String, String> consumer =
                     ConsumerBuilder.buildConsumer(brokers, name);
 
-            if(topic.getPrefix()!= null) {
+            if(topic.getPrefix() != null) {
                 if(!topic.getPrefix().isEmpty()) {
                     final List<TopicConfig> foundTopics = getTopicsFromKafka(topic.getPrefix());
                     generateConsumers(foundTopics);
@@ -80,7 +80,7 @@ public class DistributedMemory implements Memory {
 
             consumer.subscribe(Collections.singletonList(topic.getName()));
 
-            final Memory memory = createMemoryObject(String.format("%s_DM", topic));
+            final Memory memory = createMemoryObject(String.format("%s_DM", topic.getName()));
             getMemories().add(memory);
 
             MemoryWriterThread memoryWriterThread = new MemoryWriterThread(memory, consumer);

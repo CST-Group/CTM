@@ -2,6 +2,7 @@ package br.unicamp.dct.codelet;
 
 import br.unicamp.cst.core.entities.Codelet;
 import br.unicamp.dct.memory.DistributedMemory;
+import br.unicamp.dct.memory.DistributedMemoryType;
 import br.unicamp.dct.memory.TopicConfig;
 
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public class CodeletApplication {
     private void initializeDistributedMemories() {
         getConsumerCodeletTopics().forEach((codelet, topics) -> {
             DistributedMemory distributedMemory =
-                    new DistributedMemory("INPUT_DISTRIBUTED_MEMORY", getBrokers(), topics);
+                    new DistributedMemory("INPUT_DISTRIBUTED_MEMORY", getBrokers(), DistributedMemoryType.INPUT_MEMORY, topics);
 
             getDistributedMemories().add(distributedMemory);
 
@@ -54,7 +55,7 @@ public class CodeletApplication {
 
         getProducerCodeletTopics().forEach((codelet, topics) -> {
             DistributedMemory distributedMemory =
-                    new DistributedMemory("OUTPUT_DISTRIBUTED_MEMORY", getBrokers(), topics);
+                    new DistributedMemory("OUTPUT_DISTRIBUTED_MEMORY", getBrokers(), DistributedMemoryType.OUTPUT_MEMORY, topics);
 
             getDistributedMemories().add(distributedMemory);
 

@@ -7,16 +7,16 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 
 public class MemoryReaderThread extends Thread {
 
-    private Memory memory;
+    private final Memory memory;
     private Object lastI;
-    private KafkaProducer<String, String> kafkaProducer;
-    private Gson gson;
-    private DistributedMemoryBehavior distributedMemoryBehavior;
+    private final KafkaProducer<String, String> kafkaProducer;
+    private final Gson gson;
+    private final TopicConfig topicConfig;
 
-    public MemoryReaderThread(Memory memory, KafkaProducer<String, String> kafkaProducer, DistributedMemoryBehavior distributedMemoryBehavior) {
+    public MemoryReaderThread(Memory memory, KafkaProducer<String, String> kafkaProducer, TopicConfig topicConfig) {
         this.memory = memory;
         this.kafkaProducer = kafkaProducer;
-        this.distributedMemoryBehavior = distributedMemoryBehavior;
+        this.topicConfig = topicConfig;
 
         this.gson = new Gson();
     }
@@ -24,19 +24,19 @@ public class MemoryReaderThread extends Thread {
     @Override
     public void run() {
         while (true) {
-            if(distributedMemoryBehavior == DistributedMemoryBehavior.TRIGGERED) {
+            if(topicConfig.getDistributedMemoryBehavior() == DistributedMemoryBehavior.TRIGGERED) {
                 if(memory.getI() != lastI) {
-                    ProducerRecord<String, String> record = new ProducerRecord<String, String>(memory.getName().replace("_MD", ""), gson.toJson(memory));
+                    ProducerRecord<String, String> record = new ProducerRecord<String, String>(topicConfig.getName(), gson.toJson(memory));
                     kafkaProducer.send(record);
 
                     lastI = memory.getI();
                 }
             } else {
                 try {
-                    ProducerRecord<String, String> record = new ProducerRecord<String, String>(memory.getName().replace("_MD", ""), gson.toJson(memory));
+                    ProducerRecord<String, String> record = new ProducerRecord<String, String>(topicConfig.getName(), gson.toJson(memory));
                     kafkaProducer.send(record);
 
-                    Thread.sleep(10);
+                    Thread.sleep(1);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

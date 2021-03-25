@@ -83,7 +83,7 @@ public class DistributedMemory implements Memory {
             final Memory memory = createMemoryObject(String.format("%s_DM", topic.getName()));
             getMemories().add(memory);
 
-            MemoryWriterThread memoryWriterThread = new MemoryWriterThread(memory, consumer);
+            MemoryWriterThread memoryWriterThread = new MemoryWriterThread(memory, consumer, topic);
             memoryWriterThread.start();
 
             getMemoryWriterThreads().add(memoryWriterThread);
@@ -91,14 +91,14 @@ public class DistributedMemory implements Memory {
     }
 
     private void generateProducers(List<TopicConfig> topics) {
-        topics.forEach(topic -> {
+        topics.forEach(topicConfig -> {
             final KafkaProducer<String, String> producer =
                     ProducerBuilder.buildProducer(brokers);
 
-            final Memory memory = createMemoryObject(String.format("%s_DM", topic.getName()));
+            final Memory memory = createMemoryObject(String.format("%s_DM", topicConfig.getName()));
             getMemories().add(memory);
 
-            MemoryReaderThread memoryReaderThread = new MemoryReaderThread(memory, producer, topic.getDistributedMemoryBehavior());
+            MemoryReaderThread memoryReaderThread = new MemoryReaderThread(memory, producer, topicConfig);
             memoryReaderThread.start();
 
             getMemoryReaderThreads().add(memoryReaderThread);

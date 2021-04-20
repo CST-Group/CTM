@@ -86,7 +86,7 @@ public class DistributedMemory implements Memory {
             final Memory memory = createMemoryObject(String.format("%s_DM", topic.getName()));
             getMemories().add(memory);
 
-            MemoryWriterThread memoryWriterThread = new MemoryWriterThread(memory, consumer, topic);
+            MemoryWriterThread memoryWriterThread = new MemoryWriterThread(memory, consumer, topic, topic.getClassToConvert());
             memoryWriterThread.start();
 
             getMemoryWriterThreads().add(memoryWriterThread);

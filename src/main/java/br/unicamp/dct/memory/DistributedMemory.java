@@ -2,11 +2,14 @@ package br.unicamp.dct.memory;
 
 import br.unicamp.cst.core.entities.Memory;
 import br.unicamp.cst.core.entities.MemoryObject;
-import br.unicamp.dct.kafka.ConsumerBuilder;
-import br.unicamp.dct.kafka.ProducerBuilder;
+import br.unicamp.dct.kafka.builder.ConsumerBuilder;
+import br.unicamp.dct.kafka.TopicConfigProvider;
+import br.unicamp.dct.kafka.builder.ProducerBuilder;
+import br.unicamp.dct.kafka.config.TopicConfig;
+import br.unicamp.dct.thread.MemoryContentReaderThread;
+import br.unicamp.dct.thread.MemoryContentWriterThread;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.common.PartitionInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,36 +17,34 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class DistributedMemory implements Memory {
 
     private String name;
     private String brokers;
-    private List<TopicConfig> topics;
+    private List<TopicConfig> topicsConfig;
     private DistributedMemoryType type;
     private List<Memory> memories;
-    private List<MemoryWriterThread> memoryWriterThreads;
-    private List<MemoryReaderThread> memoryReaderThreads;
+    private List<MemoryContentWriterThread> memoryContentWriterThreads;
+    private List<MemoryContentReaderThread> memoryContentReaderThreads;
 
     private Logger logger;
 
-    public DistributedMemory(String name, String brokers, DistributedMemoryType type, List<TopicConfig> topics) {
-        memorySetup(name, brokers, type, topics);
+    public DistributedMemory(String name, String brokers, DistributedMemoryType type, List<TopicConfig> topicsConfig) {
+        memorySetup(name, brokers, type, topicsConfig);
     }
 
     private void memorySetup(String name, String brokers, DistributedMemoryType type,
                              List<TopicConfig> topics) {
         this.name = name;
-        this.topics = topics;
+        this.topicsConfig = topics;
         this.type = type;
         this.brokers = brokers;
 
         this.memories = new ArrayList<>();
-        this.memoryWriterThreads = new ArrayList<>();
-        this.memoryReaderThreads = new ArrayList<>();
+        this.memoryContentWriterThreads = new ArrayList<>();
+        this.memoryContentReaderThreads = new ArrayList<>();
 
         this.logger = LoggerFactory.getLogger(DistributedMemory.class);
 
@@ -53,20 +54,6 @@ public class DistributedMemory implements Memory {
             generateProducers(topics);
     }
 
-    private List<TopicConfig> getTopicsFromKafka(String prefix) {
-        final KafkaConsumer<String, String> any = ConsumerBuilder.buildConsumer(brokers, "any");
-        final Map<String, List<PartitionInfo>> topicsInfo = any.listTopics();
-
-        final List<String> foundTopics =
-                topicsInfo.keySet().stream().filter(partitionInfos -> partitionInfos.contains(prefix))
-                        .collect(Collectors.toList());
-        any.close();
-
-        return foundTopics.stream().map(topic -> new
-                TopicConfig(topic, DistributedMemoryBehavior.PULLED)
-        ).collect(Collectors.toList());
-    }
-
     private void generateConsumers(List<TopicConfig> topics) {
         topics.forEach(topic -> {
             final KafkaConsumer<String, String> consumer =
@@ -74,7 +61,7 @@ public class DistributedMemory implements Memory {
 
             if(topic.getPrefix() != null) {
                 if(!topic.getPrefix().isEmpty()) {
-                    final List<TopicConfig> foundTopics = getTopicsFromKafka(topic.getPrefix());
+                    final List<TopicConfig> foundTopics = TopicConfigProvider.generateTopicConfigsPrefix(brokers, topic.getPrefix());
                     generateConsumers(foundTopics);
 
                     return;
@@ -86,10 +73,10 @@ public class DistributedMemory implements Memory {
             final Memory memory = createMemoryObject(String.format("%s_DM", topic.getName()));
             getMemories().add(memory);
 
-            MemoryWriterThread memoryWriterThread = new MemoryWriterThread(memory, consumer, topic, topic.getClassToConvert());
-            memoryWriterThread.start();
+            MemoryContentWriterThread memoryContentWriterThread = new MemoryContentWriterThread(memory, consumer, topic, topic.getClassToConvert());
+            memoryContentWriterThread.start();
 
-            getMemoryWriterThreads().add(memoryWriterThread);
+            getMemoryWriterThreads().add(memoryContentWriterThread);
         });
     }
 
@@ -101,10 +88,10 @@ public class DistributedMemory implements Memory {
             final Memory memory = createMemoryObject(String.format("%s_DM", topicConfig.getName()));
             getMemories().add(memory);
 
-            MemoryReaderThread memoryReaderThread = new MemoryReaderThread(memory, producer, topicConfig);
-            memoryReaderThread.start();
+            MemoryContentReaderThread memoryContentReaderThread = new MemoryContentReaderThread(memory, producer, topicConfig);
+            memoryContentReaderThread.start();
 
-            getMemoryReaderThreads().add(memoryReaderThread);
+            getMemoryReaderThreads().add(memoryContentReaderThread);
         });
     }
 
@@ -116,7 +103,6 @@ public class DistributedMemory implements Memory {
 
         return memoryObject;
     }
-
 
     @Override
     public Object getI() {
@@ -144,7 +130,10 @@ public class DistributedMemory implements Memory {
     @Override
     public int setI(Object info) {
         try {
-            return memories.get(0).setI(info);
+            int i = memories.get(0).setI(info);
+            notifyReaderThread(0);
+
+            return i;
         } catch (IndexOutOfBoundsException ex) {
             logger.error("Impossible to set memory content. Index 0 out of bounds.");
             return -1;
@@ -153,7 +142,10 @@ public class DistributedMemory implements Memory {
 
     public int setI(Object info, int index) {
         try {
-            return memories.get(index).setI(info);
+            int i = memories.get(index).setI(info);
+            notifyReaderThread(index);
+
+            return i;
         } catch (IndexOutOfBoundsException ex) {
             logger.error(String.format("Impossible to set memory content. Index %s out of bounds.", index));
             return -1;
@@ -163,10 +155,21 @@ public class DistributedMemory implements Memory {
     public int setI(Object info, double evaluation, int index) {
         try {
             memories.get(index).setEvaluation(evaluation);
-            return memories.get(index).setI(info);
+
+            int i = memories.get(index).setI(info);
+            notifyReaderThread(index);
+
+            return i;
         } catch (IndexOutOfBoundsException ex) {
             logger.error(String.format("Impossible to set memory content. Index %s out of bounds.", index));
             return -1;
+        }
+    }
+
+    private void notifyReaderThread(int index) {
+        if(type == DistributedMemoryType.OUTPUT_MEMORY
+                && topicsConfig.get(index).getDistributedMemoryBehavior() == DistributedMemoryBehavior.TRIGGERED) {
+            memoryContentReaderThreads.get(index).notify();
         }
     }
 
@@ -180,6 +183,7 @@ public class DistributedMemory implements Memory {
     public void setEvaluation(Double evaluation) {
         try {
             memories.get(0).setEvaluation(evaluation);
+            notifyReaderThread(0);
         } catch (IndexOutOfBoundsException ex) {
             logger.error("Impossible to set memory evaluation. Index 0 out of bounds.");
         }
@@ -188,6 +192,7 @@ public class DistributedMemory implements Memory {
     public void setEvaluation(Double evaluation, int index) {
         try {
             memories.get(index).setEvaluation(evaluation);
+            notifyReaderThread(index);
         } catch (IndexOutOfBoundsException ex) {
             logger.error(String.format("Impossible to set memory evaluation. Index %s out of bounds.", index));
         }
@@ -216,7 +221,6 @@ public class DistributedMemory implements Memory {
         }
     }
 
-
     @Override
     public String getName() {
         return name;
@@ -226,15 +230,15 @@ public class DistributedMemory implements Memory {
         return memories;
     }
 
-    public List<TopicConfig> getTopics() {
-        return topics;
+    public List<TopicConfig> getTopicsConfig() {
+        return topicsConfig;
     }
 
-    public List<MemoryWriterThread> getMemoryWriterThreads() {
-        return memoryWriterThreads;
+    public List<MemoryContentWriterThread> getMemoryWriterThreads() {
+        return memoryContentWriterThreads;
     }
 
-    public List<MemoryReaderThread> getMemoryReaderThreads() {
-        return memoryReaderThreads;
+    public List<MemoryContentReaderThread> getMemoryReaderThreads() {
+        return memoryContentReaderThreads;
     }
 }

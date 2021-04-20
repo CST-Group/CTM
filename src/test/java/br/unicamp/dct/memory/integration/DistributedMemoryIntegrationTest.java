@@ -3,7 +3,7 @@ package br.unicamp.dct.memory.integration;
 import br.unicamp.dct.memory.DistributedMemory;
 import br.unicamp.dct.memory.DistributedMemoryBehavior;
 import br.unicamp.dct.memory.DistributedMemoryType;
-import br.unicamp.dct.memory.TopicConfig;
+import br.unicamp.dct.kafka.config.TopicConfig;
 import com.google.gson.Gson;
 import junit.framework.Assert;
 import org.junit.Before;

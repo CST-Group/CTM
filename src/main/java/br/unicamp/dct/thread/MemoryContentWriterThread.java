@@ -1,7 +1,8 @@
-package br.unicamp.dct.memory;
+package br.unicamp.dct.thread;
 
 import br.unicamp.cst.core.entities.Memory;
 import br.unicamp.cst.core.entities.MemoryObject;
+import br.unicamp.dct.kafka.config.TopicConfig;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -13,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.Optional;
 
-public class MemoryWriterThread extends Thread {
+public class MemoryContentWriterThread extends Thread {
 
     private final Memory memory;
     private final KafkaConsumer<String, String> kafkaConsumer;
@@ -22,10 +23,10 @@ public class MemoryWriterThread extends Thread {
     private final Class className;
 
 
-    private final Logger logger = LoggerFactory.getLogger(MemoryWriterThread.class);
+    private final Logger logger = LoggerFactory.getLogger(MemoryContentWriterThread.class);
 
-    public MemoryWriterThread(Memory memory, KafkaConsumer<String, String> kafkaConsumer,
-                              TopicConfig topicConfig) {
+    public MemoryContentWriterThread(Memory memory, KafkaConsumer<String, String> kafkaConsumer,
+                                     TopicConfig topicConfig) {
         this.memory = memory;
         this.kafkaConsumer = kafkaConsumer;
         this.gson = new Gson();
@@ -33,8 +34,8 @@ public class MemoryWriterThread extends Thread {
         this.className = null;
     }
 
-    public MemoryWriterThread(Memory memory, KafkaConsumer<String, String> kafkaConsumer,
-                              TopicConfig topicConfig, Class className) {
+    public MemoryContentWriterThread(Memory memory, KafkaConsumer<String, String> kafkaConsumer,
+                                     TopicConfig topicConfig, Class className) {
         this.memory = memory;
         this.kafkaConsumer = kafkaConsumer;
         this.gson = new Gson();

@@ -3,7 +3,7 @@ package br.unicamp.dct.codelet;
 import br.unicamp.cst.core.entities.Codelet;
 import br.unicamp.dct.memory.DistributedMemory;
 import br.unicamp.dct.memory.DistributedMemoryType;
-import br.unicamp.dct.memory.TopicConfig;
+import br.unicamp.dct.kafka.config.TopicConfig;
 
 import java.util.ArrayList;
 import java.util.List;

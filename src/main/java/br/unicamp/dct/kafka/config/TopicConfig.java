@@ -1,4 +1,6 @@
-package br.unicamp.dct.memory;
+package br.unicamp.dct.kafka.config;
+
+import br.unicamp.dct.memory.DistributedMemoryBehavior;
 
 public class TopicConfig {
 

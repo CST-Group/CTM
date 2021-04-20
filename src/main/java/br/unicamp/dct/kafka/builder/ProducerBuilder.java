@@ -1,4 +1,4 @@
-package br.unicamp.dct.kafka;
+package br.unicamp.dct.kafka.builder;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;

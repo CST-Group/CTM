@@ -49,7 +49,7 @@ public class DistributedMemoryIntegrationTest {
     }
 
     private void setUpDistributedMemoriesByPrefix() throws InterruptedException {
-        inputTopicConfigs.add(new TopicConfig("topic-2", DistributedMemoryBehavior.PULLED, "topic-*"));
+        inputTopicConfigs.add(new TopicConfig(DistributedMemoryBehavior.PULLED, "topic-*"));
         outputTopicConfigs.add(new TopicConfig("topic-2", DistributedMemoryBehavior.PULLED));
 
         distributedInputMemory = new DistributedMemory(

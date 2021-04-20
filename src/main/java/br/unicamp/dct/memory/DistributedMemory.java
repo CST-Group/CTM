@@ -56,24 +56,26 @@ public class DistributedMemory implements Memory {
 
     private void generateConsumers(List<TopicConfig> topics) {
         topics.forEach(topic -> {
-            final KafkaConsumer<String, String> consumer =
-                    ConsumerBuilder.buildConsumer(brokers, name);
 
-            if(topic.getPrefix() != null) {
-                if(!topic.getPrefix().isEmpty()) {
-                    final List<TopicConfig> foundTopics = TopicConfigProvider.generateTopicConfigsPrefix(brokers, topic.getPrefix());
+            if (topic.getPrefix() != null) {
+                if (!topic.getPrefix().isEmpty()) {
+                    final List<TopicConfig> foundTopics =
+                            TopicConfigProvider.generateTopicConfigsPrefix(brokers, topic.getPrefix(), topic.getClassName());
                     generateConsumers(foundTopics);
 
                     return;
                 }
             }
 
+            final KafkaConsumer<String, String> consumer =
+                    ConsumerBuilder.buildConsumer(brokers, name);
+
             consumer.subscribe(Collections.singletonList(topic.getName()));
 
             final Memory memory = createMemoryObject(String.format("%s_DM", topic.getName()));
             getMemories().add(memory);
 
-            MemoryContentWriterThread memoryContentWriterThread = new MemoryContentWriterThread(memory, consumer, topic, topic.getClassToConvert());
+            MemoryContentWriterThread memoryContentWriterThread = new MemoryContentWriterThread(memory, consumer, topic, topic.getClassName());
             memoryContentWriterThread.start();
 
             getMemoryWriterThreads().add(memoryContentWriterThread);
@@ -167,7 +169,7 @@ public class DistributedMemory implements Memory {
     }
 
     private void notifyReaderThread(int index) {
-        if(type == DistributedMemoryType.OUTPUT_MEMORY
+        if (type == DistributedMemoryType.OUTPUT_MEMORY
                 && topicsConfig.get(index).getDistributedMemoryBehavior() == DistributedMemoryBehavior.TRIGGERED) {
             memoryContentReaderThreads.get(index).notify();
         }

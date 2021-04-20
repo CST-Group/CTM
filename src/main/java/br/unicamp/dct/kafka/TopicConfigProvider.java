@@ -12,7 +12,9 @@ import java.util.stream.Collectors;
 
 public class TopicConfigProvider {
 
-    public static List<TopicConfig> generateTopicConfigsPrefix(String brokers, String prefix) {
+    public static List<TopicConfig> generateTopicConfigsPrefix(String brokers, String prefix, String className) {
+
+
         final KafkaConsumer<String, String> any = ConsumerBuilder.buildConsumer(brokers, "any");
         final Map<String, List<PartitionInfo>> topicsInfo = any.listTopics();
 
@@ -22,7 +24,7 @@ public class TopicConfigProvider {
         any.close();
 
         return foundTopics.stream().map(topic -> new
-                TopicConfig(topic, DistributedMemoryBehavior.PULLED)
+                TopicConfig(topic, DistributedMemoryBehavior.PULLED, className)
         ).collect(Collectors.toList());
     }
 

@@ -20,7 +20,7 @@ public class MemoryContentWriterThread extends Thread {
     private final KafkaConsumer<String, String> kafkaConsumer;
     private final Gson gson;
     private final TopicConfig topicConfig;
-    private final Class className;
+    private final String className;
 
 
     private final Logger logger = LoggerFactory.getLogger(MemoryContentWriterThread.class);
@@ -35,7 +35,7 @@ public class MemoryContentWriterThread extends Thread {
     }
 
     public MemoryContentWriterThread(Memory memory, KafkaConsumer<String, String> kafkaConsumer,
-                                     TopicConfig topicConfig, Class className) {
+                                     TopicConfig topicConfig, String className) {
         this.memory = memory;
         this.kafkaConsumer = kafkaConsumer;
         this.gson = new Gson();
@@ -52,8 +52,10 @@ public class MemoryContentWriterThread extends Thread {
                 try {
                     Memory recordMemory = gson.fromJson(record.value(), MemoryObject.class);
 
-                    if (Optional.ofNullable(className).isPresent()) {
-                        memory.setI(gson.fromJson(String.valueOf(recordMemory.getI()), className));
+                    if (className != null) {
+                        if (!className.trim().equals("")) {
+                            memory.setI(gson.fromJson(String.valueOf(recordMemory.getI()), Class.forName(className)));
+                        }
                     } else {
                         memory.setI(recordMemory.getI());
                     }
@@ -61,6 +63,8 @@ public class MemoryContentWriterThread extends Thread {
                     memory.setEvaluation(recordMemory.getEvaluation());
                 } catch (JsonSyntaxException jsonSyntaxException) {
                     logger.error(String.format("Could not convert message from topic:%s - Message: %s", topicConfig.getName(), record.value()));
+                } catch (ClassNotFoundException e) {
+                    logger.error(String.format("Could not convert message from topic:%s - To Class: %s", topicConfig.getName(), topicConfig.getClassName()));
                 }
             }
         }

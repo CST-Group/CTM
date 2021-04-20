@@ -7,32 +7,30 @@ public class TopicConfig {
     private String name;
     private DistributedMemoryBehavior distributedMemoryBehavior;
     private String prefix;
-    private Class classToConvert;
+    private String className;
 
     public TopicConfig(String name, DistributedMemoryBehavior distributedMemoryBehavior) {
         this.setName(name);
         this.setDistributedMemoryBehavior(distributedMemoryBehavior);
-        this.setClassToConvert(null);
+        this.setClassName(null);
     }
 
-    public TopicConfig(String name, DistributedMemoryBehavior distributedMemoryBehavior, String prefix) {
+    public TopicConfig(String name, DistributedMemoryBehavior distributedMemoryBehavior, String className) {
         this.setName(name);
+        this.setDistributedMemoryBehavior(distributedMemoryBehavior);
+        this.setClassName(this.className);
+    }
+
+    public TopicConfig(DistributedMemoryBehavior distributedMemoryBehavior, String prefix) {
         this.setDistributedMemoryBehavior(distributedMemoryBehavior);
         this.setPrefix(prefix);
-        this.setClassToConvert(null);
+        this.setClassName(null);
     }
 
-    public TopicConfig(String name, DistributedMemoryBehavior distributedMemoryBehavior, Class classToConvert) {
-        this.setName(name);
-        this.setDistributedMemoryBehavior(distributedMemoryBehavior);
-        this.setClassToConvert(classToConvert);
-    }
-
-    public TopicConfig(String name, DistributedMemoryBehavior distributedMemoryBehavior, String prefix, Class classToConvert) {
-        this.setName(name);
+    public TopicConfig(DistributedMemoryBehavior distributedMemoryBehavior, String prefix, String className) {
         this.setDistributedMemoryBehavior(distributedMemoryBehavior);
         this.setPrefix(prefix);
-        this.setClassToConvert(classToConvert);
+        this.setClassName(this.className);
     }
 
     public String getName() {
@@ -59,11 +57,11 @@ public class TopicConfig {
         this.prefix = prefix;
     }
 
-    public Class getClassToConvert() {
-        return classToConvert;
+    public String getClassName() {
+        return className;
     }
 
-    public void setClassToConvert(Class classToConvert) {
-        this.classToConvert = classToConvert;
+    public void setClassName(String className) {
+        this.className = className;
     }
 }

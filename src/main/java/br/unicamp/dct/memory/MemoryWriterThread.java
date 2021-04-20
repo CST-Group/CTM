@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.util.Optional;
 
 public class MemoryWriterThread extends Thread {
 
@@ -18,6 +19,8 @@ public class MemoryWriterThread extends Thread {
     private final KafkaConsumer<String, String> kafkaConsumer;
     private final Gson gson;
     private final TopicConfig topicConfig;
+    private final Class className;
+
 
     private final Logger logger = LoggerFactory.getLogger(MemoryWriterThread.class);
 
@@ -27,6 +30,16 @@ public class MemoryWriterThread extends Thread {
         this.kafkaConsumer = kafkaConsumer;
         this.gson = new Gson();
         this.topicConfig = topicConfig;
+        this.className = null;
+    }
+
+    public MemoryWriterThread(Memory memory, KafkaConsumer<String, String> kafkaConsumer,
+                              TopicConfig topicConfig, Class className) {
+        this.memory = memory;
+        this.kafkaConsumer = kafkaConsumer;
+        this.gson = new Gson();
+        this.topicConfig = topicConfig;
+        this.className = className;
     }
 
     @Override
@@ -36,9 +49,15 @@ public class MemoryWriterThread extends Thread {
 
             for (ConsumerRecord<String, String> record : records) {
                 try {
-                  Memory recordMemory = gson.fromJson(record.value(), MemoryObject.class);
-                  memory.setI(recordMemory.getI());
-                  memory.setEvaluation(recordMemory.getEvaluation());
+                    Memory recordMemory = gson.fromJson(record.value(), MemoryObject.class);
+
+                    if (Optional.ofNullable(className).isPresent()) {
+                        memory.setI(gson.fromJson(String.valueOf(recordMemory.getI()), className));
+                    } else {
+                        memory.setI(recordMemory.getI());
+                    }
+
+                    memory.setEvaluation(recordMemory.getEvaluation());
                 } catch (JsonSyntaxException jsonSyntaxException) {
                     logger.error(String.format("Could not convert message from topic:%s - Message: %s", topicConfig.getName(), record.value()));
                 }

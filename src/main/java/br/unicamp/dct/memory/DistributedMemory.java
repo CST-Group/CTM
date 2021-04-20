@@ -56,6 +56,7 @@ public class DistributedMemory implements Memory {
     private List<TopicConfig> getTopicsFromKafka(String prefix) {
         final KafkaConsumer<String, String> any = ConsumerBuilder.buildConsumer(brokers, "any");
         final Map<String, List<PartitionInfo>> topicsInfo = any.listTopics();
+
         final List<String> foundTopics =
                 topicsInfo.keySet().stream().filter(partitionInfos -> partitionInfos.contains(prefix))
                         .collect(Collectors.toList());
@@ -75,6 +76,8 @@ public class DistributedMemory implements Memory {
                 if(!topic.getPrefix().isEmpty()) {
                     final List<TopicConfig> foundTopics = getTopicsFromKafka(topic.getPrefix());
                     generateConsumers(foundTopics);
+
+                    return;
                 }
             }
 

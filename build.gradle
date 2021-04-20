@@ -25,3 +25,7 @@ dependencies {
     testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: '3.8.0'
 
 }
+
+test {
+    exclude '**/**Integration**'
+}

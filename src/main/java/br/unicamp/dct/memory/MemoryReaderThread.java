@@ -24,22 +24,22 @@ public class MemoryReaderThread extends Thread {
     @Override
     public void run() {
         while (true) {
-            if(topicConfig.getDistributedMemoryBehavior() == DistributedMemoryBehavior.TRIGGERED) {
-                if(memory.getI() != lastI) {
+            try {
+                if(topicConfig.getDistributedMemoryBehavior() == DistributedMemoryBehavior.TRIGGERED) {
+                    if(memory.getI() != lastI) {
+                        ProducerRecord<String, String> record = new ProducerRecord<String, String>(topicConfig.getName(), gson.toJson(memory));
+                        kafkaProducer.send(record);
+
+                        lastI = memory.getI();
+                    }
+                } else {
                     ProducerRecord<String, String> record = new ProducerRecord<String, String>(topicConfig.getName(), gson.toJson(memory));
                     kafkaProducer.send(record);
-
-                    lastI = memory.getI();
                 }
-            } else {
-                try {
-                    ProducerRecord<String, String> record = new ProducerRecord<String, String>(topicConfig.getName(), gson.toJson(memory));
-                    kafkaProducer.send(record);
 
-                    Thread.sleep(1);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                Thread.sleep(1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }

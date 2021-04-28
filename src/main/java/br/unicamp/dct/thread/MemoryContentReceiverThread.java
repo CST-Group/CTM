@@ -58,7 +58,6 @@ public class MemoryContentReceiverThread extends Thread {
                         }
                     } else {
                         memory.setI(recordMemory.getI());
-                        System.out.println(String.format("Offset: %s - Value %s", record.offset(), record.value()));
                     }
 
                     memory.setEvaluation(recordMemory.getEvaluation());

@@ -2,6 +2,7 @@ package br.unicamp.dct.memory;
 
 import br.unicamp.cst.core.entities.Memory;
 import br.unicamp.cst.core.entities.MemoryObject;
+import br.unicamp.dct.exception.TopicNotFoundException;
 import br.unicamp.dct.kafka.builder.ConsumerBuilder;
 import br.unicamp.dct.kafka.TopicConfigProvider;
 import br.unicamp.dct.kafka.builder.ProducerBuilder;
@@ -29,7 +30,7 @@ public class DistributedMemory implements Memory {
     private List<MemoryContentReceiverThread> memoryContentReceiverThreads;
     private List<MemoryContentPublisherThread> memoryContentPublisherThreads;
 
-    private Logger logger = LoggerFactory.getLogger(DistributedMemory.class);
+    private final Logger logger = LoggerFactory.getLogger(DistributedMemory.class);
 
     public DistributedMemory(String name, String brokers, DistributedMemoryType type, List<TopicConfig> topicsConfig) {
         memorySetup(name, brokers, type, topicsConfig);
@@ -56,12 +57,15 @@ public class DistributedMemory implements Memory {
         topics.forEach(topic -> {
             if (topic.getPrefix() != null) {
                 if (!topic.getPrefix().isEmpty()) {
-                    final List<TopicConfig> foundTopics =
-                            TopicConfigProvider.generateTopicConfigsPrefix(brokers, topic.getPrefix(), topic.getClassName());
+                    try {
+                        final List<TopicConfig> foundTopics =
+                                TopicConfigProvider.generateTopicConfigsPrefix(brokers, topic.getPrefix(), topic.getClassName());
 
-                    System.out.println("TOTAL FOUND:" + foundTopics.get(0).getName());
-
-                    generateConsumers(foundTopics);
+                        generateConsumers(foundTopics);
+                    } catch (TopicNotFoundException e) {
+                        logger.error(e.getMessage());
+                        e.printStackTrace();
+                    }
 
                     return;
                 }

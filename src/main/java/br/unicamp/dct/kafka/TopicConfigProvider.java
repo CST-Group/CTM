@@ -1,5 +1,6 @@
 package br.unicamp.dct.kafka;
 
+import br.unicamp.dct.exception.TopicNotFoundException;
 import br.unicamp.dct.kafka.builder.ConsumerBuilder;
 import br.unicamp.dct.kafka.config.TopicConfig;
 import br.unicamp.dct.memory.DistributedMemoryBehavior;
@@ -14,7 +15,7 @@ import java.util.stream.Collectors;
 
 public class TopicConfigProvider {
 
-    public static List<TopicConfig> generateTopicConfigsPrefix(String brokers, String prefix, String className) {
+    public static List<TopicConfig> generateTopicConfigsPrefix(String brokers, String prefix, String className) throws TopicNotFoundException {
         final KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(ConsumerBuilder.buildConsumerProperties(brokers, "any"));
         final Map<String, List<PartitionInfo>> topicsInfo = kafkaConsumer.listTopics();
 
@@ -25,6 +26,10 @@ public class TopicConfigProvider {
         List<String> foundTopics = topics.stream().filter(pattern.asPredicate()).collect(Collectors.toList());
 
         kafkaConsumer.close();
+
+        if (foundTopics.size() == 0) {
+            throw new TopicNotFoundException("Topics not found. Review regex pattern.");
+        }
 
         return foundTopics.stream().map(topic -> new
                 TopicConfig(topic, DistributedMemoryBehavior.PULLED, className)

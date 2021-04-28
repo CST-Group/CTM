@@ -1,6 +1,9 @@
+import com.sun.tools.javadoc.Main
+
 plugins {
     id 'java'
     id 'jacoco'
+    id 'com.avast.gradle.docker-compose' version '0.7.1'
     id 'maven'
 }
 
@@ -15,7 +18,7 @@ repositories {
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile 'junit:junit:4.13.1'
 
     implementation group: 'org.apache.kafka', name: 'kafka_2.13', version: '2.7.0'
     implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
@@ -26,6 +29,15 @@ dependencies {
 
 }
 
+dockerCompose {
+    useComposeFiles = ['docker-compose.yaml']
+}
+
 test {
-    exclude '**/**Integration**'
+    if (project.hasProperty('integrationTest')) {
+        dependsOn composeUp
+        finalizedBy composeDown
+    } else {
+        exclude '**/**Integration**'
+    }
 }

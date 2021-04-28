@@ -1,5 +1,6 @@
-package br.unicamp.dct.memory;
+package br.unicamp.dct.memory.unity;
 
+import br.unicamp.dct.memory.DistributedMemory;
 import junit.framework.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;

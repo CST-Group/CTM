@@ -12,9 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.util.Optional;
 
-public class MemoryContentWriterThread extends Thread {
+public class MemoryContentReceiverThread extends Thread {
 
     private final Memory memory;
     private final KafkaConsumer<String, String> kafkaConsumer;
@@ -23,10 +22,10 @@ public class MemoryContentWriterThread extends Thread {
     private final String className;
 
 
-    private final Logger logger = LoggerFactory.getLogger(MemoryContentWriterThread.class);
+    private final Logger logger = LoggerFactory.getLogger(MemoryContentReceiverThread.class);
 
-    public MemoryContentWriterThread(Memory memory, KafkaConsumer<String, String> kafkaConsumer,
-                                     TopicConfig topicConfig) {
+    public MemoryContentReceiverThread(Memory memory, KafkaConsumer<String, String> kafkaConsumer,
+                                       TopicConfig topicConfig) {
         this.memory = memory;
         this.kafkaConsumer = kafkaConsumer;
         this.gson = new Gson();
@@ -34,8 +33,8 @@ public class MemoryContentWriterThread extends Thread {
         this.className = null;
     }
 
-    public MemoryContentWriterThread(Memory memory, KafkaConsumer<String, String> kafkaConsumer,
-                                     TopicConfig topicConfig, String className) {
+    public MemoryContentReceiverThread(Memory memory, KafkaConsumer<String, String> kafkaConsumer,
+                                       TopicConfig topicConfig, String className) {
         this.memory = memory;
         this.kafkaConsumer = kafkaConsumer;
         this.gson = new Gson();
@@ -46,7 +45,8 @@ public class MemoryContentWriterThread extends Thread {
     @Override
     public void run() {
         while (true) {
-            ConsumerRecords<String, String> records = kafkaConsumer.poll(Duration.ofMillis(1));
+
+            ConsumerRecords<String, String> records = kafkaConsumer.poll(Duration.ofMillis(10));
 
             for (ConsumerRecord<String, String> record : records) {
                 try {
@@ -58,6 +58,7 @@ public class MemoryContentWriterThread extends Thread {
                         }
                     } else {
                         memory.setI(recordMemory.getI());
+                        System.out.println(String.format("Offset: %s - Value %s", record.offset(), record.value()));
                     }
 
                     memory.setEvaluation(recordMemory.getEvaluation());

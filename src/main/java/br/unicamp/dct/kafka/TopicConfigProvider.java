@@ -6,22 +6,25 @@ import br.unicamp.dct.memory.DistributedMemoryBehavior;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.PartitionInfo;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class TopicConfigProvider {
 
     public static List<TopicConfig> generateTopicConfigsPrefix(String brokers, String prefix, String className) {
+        final KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(ConsumerBuilder.buildConsumerProperties(brokers, "any"));
+        final Map<String, List<PartitionInfo>> topicsInfo = kafkaConsumer.listTopics();
 
+        final List<String> topics =
+                new ArrayList<>(topicsInfo.keySet());
 
-        final KafkaConsumer<String, String> any = ConsumerBuilder.buildConsumer(brokers, "any");
-        final Map<String, List<PartitionInfo>> topicsInfo = any.listTopics();
+        Pattern pattern = Pattern.compile(prefix);
+        List<String> foundTopics = topics.stream().filter(pattern.asPredicate()).collect(Collectors.toList());
 
-        final List<String> foundTopics =
-                topicsInfo.keySet().stream().filter(partitionInfos -> partitionInfos.contains(prefix))
-                        .collect(Collectors.toList());
-        any.close();
+        kafkaConsumer.close();
 
         return foundTopics.stream().map(topic -> new
                 TopicConfig(topic, DistributedMemoryBehavior.PULLED, className)

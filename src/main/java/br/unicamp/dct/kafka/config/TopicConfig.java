@@ -18,7 +18,7 @@ public class TopicConfig {
     public TopicConfig(String name, DistributedMemoryBehavior distributedMemoryBehavior, String className) {
         this.setName(name);
         this.setDistributedMemoryBehavior(distributedMemoryBehavior);
-        this.setClassName(this.className);
+        this.setClassName(className);
     }
 
     public TopicConfig(DistributedMemoryBehavior distributedMemoryBehavior, String prefix) {
@@ -30,7 +30,7 @@ public class TopicConfig {
     public TopicConfig(DistributedMemoryBehavior distributedMemoryBehavior, String prefix, String className) {
         this.setDistributedMemoryBehavior(distributedMemoryBehavior);
         this.setPrefix(prefix);
-        this.setClassName(this.className);
+        this.setClassName(className);
     }
 
     public String getName() {

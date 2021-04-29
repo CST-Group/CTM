@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+    name: codelet-application
+spec:
+  containers:
+    - name: container-name
+      image: alpine
+      command: ["/init/start.sh"]
+      ports:
+        - name: port-name
+          containerPort: 2368
+          protocol: TCP
+      volumes:
+        - name: volume-name
+          mountPath: /init
+  volumes:
+    - name: volume-name

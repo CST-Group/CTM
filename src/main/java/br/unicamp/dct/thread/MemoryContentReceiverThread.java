@@ -19,7 +19,6 @@ public class MemoryContentReceiverThread extends Thread {
     private final KafkaConsumer<String, String> kafkaConsumer;
     private final Gson gson;
     private final TopicConfig topicConfig;
-    private final String className;
 
 
     private final Logger logger = LoggerFactory.getLogger(MemoryContentReceiverThread.class);
@@ -30,16 +29,6 @@ public class MemoryContentReceiverThread extends Thread {
         this.kafkaConsumer = kafkaConsumer;
         this.gson = new Gson();
         this.topicConfig = topicConfig;
-        this.className = null;
-    }
-
-    public MemoryContentReceiverThread(Memory memory, KafkaConsumer<String, String> kafkaConsumer,
-                                       TopicConfig topicConfig, String className) {
-        this.memory = memory;
-        this.kafkaConsumer = kafkaConsumer;
-        this.gson = new Gson();
-        this.topicConfig = topicConfig;
-        this.className = className;
     }
 
     @Override
@@ -52,9 +41,9 @@ public class MemoryContentReceiverThread extends Thread {
                 try {
                     Memory recordMemory = gson.fromJson(record.value(), MemoryObject.class);
 
-                    if (className != null) {
-                        if (!className.trim().equals("")) {
-                            memory.setI(gson.fromJson(String.valueOf(recordMemory.getI()), Class.forName(className)));
+                    if (topicConfig.getClassName() != null) {
+                        if (!topicConfig.getClassName().trim().equals("")) {
+                            memory.setI(gson.fromJson(String.valueOf(recordMemory.getI()), Class.forName(topicConfig.getClassName())));
                         }
                     } else {
                         memory.setI(recordMemory.getI());

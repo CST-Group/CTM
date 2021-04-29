@@ -10,7 +10,8 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 public class MemoryContentPublisherThread extends Thread {
 
     private final Memory memory;
-    private Object lastI;
+    private Object lastI = null;
+    private Double lastEvaluate = 0d;
     private final KafkaProducer<String, String> kafkaProducer;
     private final Gson gson;
     private final TopicConfig topicConfig;
@@ -28,7 +29,6 @@ public class MemoryContentPublisherThread extends Thread {
         while (true) {
             try {
                 if(topicConfig.getDistributedMemoryBehavior() == DistributedMemoryBehavior.TRIGGERED) {
-
                     synchronized (memory) {
                         memory.wait();
                     }
@@ -39,11 +39,11 @@ public class MemoryContentPublisherThread extends Thread {
                     kafkaProducer.send(record);
 
                 } else {
-                    if(memory.getI() != lastI) {
+                    if(memory.getI() != lastI || memory.getEvaluation() != lastEvaluate) {
                         ProducerRecord<String, String> record = new ProducerRecord<String, String>(topicConfig.getName(), gson.toJson(memory));
                         kafkaProducer.send(record);
-
                         lastI = memory.getI();
+                        lastEvaluate = memory.getEvaluation();
                     }
 
                     Thread.sleep(10);

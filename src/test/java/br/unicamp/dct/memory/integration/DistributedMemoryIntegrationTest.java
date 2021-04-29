@@ -30,17 +30,19 @@ public class DistributedMemoryIntegrationTest {
 
         distributedInputMemory = new DistributedMemory(
                 "MEMORY_TEST_INPUT",
-                "http://localhost:9092",
                 DistributedMemoryType.INPUT_MEMORY,
                 inputTopicConfigs
         );
 
+        distributedInputMemory.initMemory("http://localhost:9092");
+
         distributedOutputMemory = new DistributedMemory(
                 "MEMORY_TEST_OUTPUT",
-                "http://localhost:9092",
                 DistributedMemoryType.OUTPUT_MEMORY,
                 outputTopicConfigs
         );
+
+        distributedOutputMemory.initMemory("http://localhost:9092");
 
         Thread.sleep(1000);
     }
@@ -54,17 +56,19 @@ public class DistributedMemoryIntegrationTest {
 
         distributedInputMemory = new DistributedMemory(
                 "MEMORY_TEST_INPUT",
-                "http://localhost:9092",
                 DistributedMemoryType.INPUT_MEMORY,
                 inputTopicConfigs
         );
 
+        distributedInputMemory.initMemory("http://localhost:9092");
+
         distributedOutputMemory = new DistributedMemory(
                 "MEMORY_TEST_OUTPUT",
-                "http://localhost:9092",
                 DistributedMemoryType.OUTPUT_MEMORY,
                 outputTopicConfigs
         );
+
+        distributedOutputMemory.initMemory("http://localhost:9092");
 
         Thread.sleep(1000);
     }
@@ -78,17 +82,19 @@ public class DistributedMemoryIntegrationTest {
 
         distributedInputMemory = new DistributedMemory(
                 "MEMORY_TEST_INPUT",
-                "http://localhost:9092",
                 DistributedMemoryType.INPUT_MEMORY,
                 inputTopicConfigs
         );
 
+        distributedInputMemory.initMemory("http://localhost:9092");
+
         distributedOutputMemory = new DistributedMemory(
                 "MEMORY_TEST_OUTPUT",
-                "http://localhost:9092",
                 DistributedMemoryType.OUTPUT_MEMORY,
                 outputTopicConfigs
         );
+
+        distributedOutputMemory.initMemory("http://localhost:9092");
 
         Thread.sleep(1000);
     }
@@ -120,20 +126,15 @@ public class DistributedMemoryIntegrationTest {
 
         distributedOutputMemory.setI(message);
 
-        Thread.sleep(1000);
+        Thread.sleep(2000);
 
-        for (Memory testMemory: distributedInputMemory.getMemories()) {
-            System.out.println(testMemory.getName());
-            System.out.println(testMemory.getI());
-        }
-
-        Assert.assertEquals(distributedOutputMemory.getI(), distributedInputMemory.getI(0));
+        Assert.assertEquals(distributedOutputMemory.getI(), distributedInputMemory.getI());
 
         message = "New message to test!";
         distributedOutputMemory.setI(message);
 
-        Thread.sleep(1000);
-        Assert.assertEquals(distributedOutputMemory.getI(), distributedInputMemory.getI(0));
+        Thread.sleep(2000);
+        Assert.assertEquals(distributedOutputMemory.getI(), distributedInputMemory.getI());
     }
 
 

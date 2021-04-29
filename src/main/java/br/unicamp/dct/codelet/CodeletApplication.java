@@ -13,21 +13,15 @@ public class CodeletApplication {
 
     private String brokers;
     private List<Codelet> codelets;
-    private List<DistributedMemory> distributedMemories;
-    private Map<Codelet, List<TopicConfig>> consumerCodeletTopics;
-    private Map<Codelet, List<TopicConfig>> producerCodeletTopics;
+    private Map<Codelet, List<DistributedMemory>> codeletMemories;
 
     public CodeletApplication(
             String brokers,
-            List<Codelet> codelets,
-            Map<Codelet, List<TopicConfig>> consumerCodeletTopics,
-            Map<Codelet, List<TopicConfig>> producerCodeletTopics
+            Map<Codelet, List<DistributedMemory>> codeletMemories
     ) {
-        this.brokers = brokers;
-        this.codelets = codelets;
-        this.consumerCodeletTopics = consumerCodeletTopics;
-        this.producerCodeletTopics = producerCodeletTopics;
-        this.distributedMemories = new ArrayList<>();
+        this.setBrokers(brokers);
+        this.setCodeletMemories(codeletMemories);
+        this.codelets = new ArrayList<>();
 
         setupCodeletApplication();
     }
@@ -42,27 +36,18 @@ public class CodeletApplication {
     }
     
     private void initializeDistributedMemories() {
-        getConsumerCodeletTopics().forEach((codelet, topics) -> {
-            DistributedMemory distributedMemory =
-                    new DistributedMemory("INPUT_DISTRIBUTED_MEMORY", getBrokers(), DistributedMemoryType.INPUT_MEMORY, topics);
+        getCodeletMemories().forEach((codelet, memories) -> {
+            memories.forEach(memory -> {
+                memory.initMemory(getBrokers());
 
-            getDistributedMemories().add(distributedMemory);
-
-            codelet.addInput(distributedMemory);
+                if (memory.getType() == DistributedMemoryType.INPUT_MEMORY) {
+                    codelet.addInput(memory);
+                } else {
+                    codelet.addOutput(memory);
+                }
+            });
 
             getCodelets().add(codelet);
-        });
-
-        getProducerCodeletTopics().forEach((codelet, topics) -> {
-            DistributedMemory distributedMemory =
-                    new DistributedMemory("OUTPUT_DISTRIBUTED_MEMORY", getBrokers(), DistributedMemoryType.OUTPUT_MEMORY, topics);
-
-            getDistributedMemories().add(distributedMemory);
-
-            codelet.addOutput(distributedMemory);
-
-            if (getCodelets().stream().noneMatch(cod -> cod == codelet))
-                getCodelets().add(codelet);
         });
     }
 
@@ -70,19 +55,20 @@ public class CodeletApplication {
         return brokers;
     }
 
+
+    public Map<Codelet, List<DistributedMemory>> getCodeletMemories() {
+        return codeletMemories;
+    }
+
+    public void setCodeletMemories(Map<Codelet, List<DistributedMemory>> codeletMemories) {
+        this.codeletMemories = codeletMemories;
+    }
+
+    public void setBrokers(String brokers) {
+        this.brokers = brokers;
+    }
+
     public List<Codelet> getCodelets() {
         return codelets;
-    }
-
-    public List<DistributedMemory> getDistributedMemories() {
-        return distributedMemories;
-    }
-
-    public Map<Codelet, List<TopicConfig>> getConsumerCodeletTopics() {
-        return consumerCodeletTopics;
-    }
-
-    public Map<Codelet, List<TopicConfig>> getProducerCodeletTopics() {
-        return producerCodeletTopics;
     }
 }

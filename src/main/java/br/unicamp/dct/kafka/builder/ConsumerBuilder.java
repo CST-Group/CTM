@@ -79,6 +79,10 @@ public class ConsumerBuilder {
                         final List<TopicConfig> foundTopics =
                                 TopicConfigProvider.generateTopicConfigsPrefix(brokers, topic.getPrefix(), topic.getClassName());
 
+                        if (foundTopics.size() == 0) {
+                            throw new TopicNotFoundException(String.format("Topic prefix not found - Prefix - %s.", topic.getPrefix()));
+                        }
+
                         Map<TopicConfig, KafkaConsumer<String, String>> prefixConsumers = generateConsumers(foundTopics, brokers, consumerGroupID);
                         consumers.putAll(prefixConsumers);
                     } catch (TopicNotFoundException e) {

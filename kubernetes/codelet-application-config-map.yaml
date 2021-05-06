@@ -4,12 +4,12 @@ metadata:
     name: codelet-application
 spec:
   containers:
-    - name: container-name
-      image: alpine
+    - name: codelet-application-name
+      image: image:version
       command: ["/init/start.sh"]
       ports:
         - name: port-name
-          containerPort: 2368
+          containerPort: 8080
           protocol: TCP
       volumes:
         - name: volume-name

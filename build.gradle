@@ -9,7 +9,7 @@ plugins {
 }
 
 group 'br.unicamp.dct'
-artifactId 'jdct'
+artifactId 'JDCT'
 version '1.0.0'
 
 sourceCompatibility = 1.11

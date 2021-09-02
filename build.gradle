@@ -46,10 +46,8 @@ publishing {
             name = "GitHubPackages"
             url = "https://maven.pkg.github.com/eduardofroes/JDCT"
             credentials {
-                //username = System.getenv("USERNAME")
-                //password = System.getenv("TOKEN")
-                username = "eduardofroes"
-                password = "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"
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
             }
         }
     }

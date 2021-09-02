@@ -13,6 +13,7 @@ sourceCompatibility = 1.8
 repositories {
     mavenCentral()
     maven { url 'https://jitpack.io' }
+    jcenter()
 }
 
 dependencies {
@@ -38,4 +39,8 @@ test {
     } else {
         exclude '**/**Integration**'
     }
+}
+
+clean {
+    delete rootProject.buildDir
 }

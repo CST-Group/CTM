@@ -49,7 +49,7 @@ publishing {
                 //username = System.getenv("USERNAME")
                 //password = System.getenv("TOKEN")
                 username = "eduardofroes"
-                password = "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"
+                password = "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"
             }
         }
     }

@@ -39,21 +39,3 @@ test {
         exclude '**/**Integration**'
     }
 }
-
-publishing {
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = "https://maven.pkg.github.com/CST-Group/JDCT"
-            credentials {
-                username = project.findProperty("gpr.user") ?: System.getProperty("GITHUB_USERNAME")
-                password = project.findProperty("gpr.key") ?: System.getProperty("GITHUB_TOKEN")
-            }
-        }
-    }
-    publications {
-        gpr(MavenPublication) {
-           from(components.java)
-        }
-    }
-}

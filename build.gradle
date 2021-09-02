@@ -3,7 +3,6 @@ plugins {
     id 'jacoco'
     id 'com.avast.gradle.docker-compose' version '0.7.1'
     id 'maven-publish'
-    id 'maven'
 }
 
 group 'br.unicamp.dct'
@@ -50,6 +49,11 @@ publishing {
                 username = System.getenv("GITHUB_ACTOR")
                 password = System.getenv("GITHUB_TOKEN")
             }
+        }
+    }
+    publications {
+        gpr(MavenPublication) {
+           from(components.java)
         }
     }
 }

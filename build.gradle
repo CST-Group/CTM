@@ -46,8 +46,8 @@ publishing {
             name = "GitHubPackages"
             url = "https://maven.pkg.github.com/CST-Group/JDCT"
             credentials {
-                username = project.findProperty("gpr.user") ?: System.getProperty("USERNAME")
-                password = project.findProperty("gpr.password") ?: System.getProperty("PASSWORD")
+                username = project.findProperty("github.user") ?: System.getProperty("GITHUB_USERNAME")
+                password = project.findProperty("github.token") ?: System.getProperty("GITHUB_TOKEN")
             }
         }
     }

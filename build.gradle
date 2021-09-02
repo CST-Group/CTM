@@ -8,7 +8,7 @@ plugins {
 group 'br.unicamp.dct'
 version '1.0.0'
 
-sourceCompatibility = 1.11
+sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()

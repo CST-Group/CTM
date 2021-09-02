@@ -16,7 +16,6 @@ repositories {
 }
 
 dependencies {
-    testCompile 'junit:junit:4.13.1'
 
     implementation group: 'org.apache.kafka', name: 'kafka_2.13', version: '2.7.0'
     implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
@@ -24,6 +23,7 @@ dependencies {
     implementation group: 'com.github.CST-Group', name:'cst', version: '0.6.1'
 
     testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: '3.8.0'
+    testImplementation group: 'junit', name: 'junit', version: '4.13.1'
 
 }
 

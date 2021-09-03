@@ -43,3 +43,15 @@ test {
 clean {
     delete rootProject.buildDir
 }
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = 'com.github.CST-Group'
+            artifactId = 'JDCT'
+            version = '1.0.0'
+
+            from components.java
+        }
+    }
+}

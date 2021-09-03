@@ -1,17 +1,17 @@
 plugins {
     id 'java'
-    id 'jacoco'
     id 'com.avast.gradle.docker-compose' version '0.7.1'
     id 'maven-publish'
 }
 
-group 'br.unicamp.dct'
+group 'com.github.CST-Group'
 version '1.0.0'
 
 sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 repositories {
-    jcenter()
+    mavenCentral()
     maven { url "https://jitpack.io" }
 }
 

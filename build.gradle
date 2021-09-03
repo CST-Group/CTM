@@ -50,8 +50,8 @@ publishing {
             name = "jdct"
             url = uri("https://maven.pkg.github.com/cst-group/jdct")
             credentials {
-                username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
-                password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+                username = System.getenv("USERNAME")
+                password = System.getenv("TOKEN")
             }
         }
     }
@@ -65,15 +65,3 @@ publishing {
         }
     }
 }
-
-//publishing {
-//    publications {
-//        mavenJava(MavenPublication) {
-//            groupId = 'com.github.CST-Group'
-//            artifactId = 'JDCT'
-//            version = version
-//
-//            from components.java
-//        }
-//    }
-//}

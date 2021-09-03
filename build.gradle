@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'com.github.CST-Group'
-version '1.0.0'
+version '0.0.1'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -59,7 +59,7 @@ publishing {
         gpr(MavenPublication) {
             groupId = 'com.github.CST-Group'
             artifactId = 'jdct'
-            version = '1.0.0'
+            version = '0.0.1'
 
             from(components.java)
         }

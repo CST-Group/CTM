@@ -6,7 +6,6 @@ plugins {
 
 group 'com.github.CST-Group'
 version '1.0.0'
-artifactId 'jdct'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -48,7 +47,7 @@ clean {
 publishing {
     repositories {
         maven {
-            name = "GitHubPackages"
+            name = "jdct"
             url = uri("https://maven.pkg.github.com/cst-group/jdct")
             credentials {
                 username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
@@ -58,6 +57,10 @@ publishing {
     }
     publications {
         gpr(MavenPublication) {
+            groupId = 'com.github.CST-Group'
+            artifactId = 'jdct'
+            version = '1.0.0'
+
             from(components.java)
         }
     }

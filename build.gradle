@@ -45,13 +45,31 @@ clean {
 }
 
 publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/CST-Group/JDCT")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+                password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+            }
+        }
+    }
     publications {
-        mavenJava(MavenPublication) {
-            groupId = 'com.github.CST-Group'
-            artifactId = 'JDCT'
-            version = version
-
-            from components.java
+        gpr(MavenPublication) {
+            from(components.java)
         }
     }
 }
+
+//publishing {
+//    publications {
+//        mavenJava(MavenPublication) {
+//            groupId = 'com.github.CST-Group'
+//            artifactId = 'JDCT'
+//            version = version
+//
+//            from components.java
+//        }
+//    }
+//}

@@ -26,7 +26,7 @@ jobs:
       uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b
     - name: Build with Gradle
       run: gradle build -i
-        - name: Create Release
+      - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:

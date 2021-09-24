@@ -54,7 +54,7 @@ public class DistributedMemory implements Memory {
         topicConsumersMap.forEach((topicConfig, consumer) -> {
             String topicName = topicConfig.getName();
 
-            final Memory memory = MemoryBuilder.createMemoryObject(String.format("%s_DM", topicName));
+            final Memory memory = MemoryBuilder.createMemoryObject(topicName);
             getMemories().add(memory);
 
             MemoryContentReceiverThread memoryContentReceiverThread = new MemoryContentReceiverThread(memory, consumer, topicConfig);
@@ -68,7 +68,7 @@ public class DistributedMemory implements Memory {
         List<KafkaProducer<String, String>> producers = ProducerBuilder.generateProducers(topics, getBrokers());
 
         for (int i = 0; i < producers.size(); i++) {
-            final Memory memory = MemoryBuilder.createMemoryObject(String.format("%s_DM", topics.get(i).getName()));
+            final Memory memory = MemoryBuilder.createMemoryObject(topics.get(i).getName());
             getMemories().add(memory);
 
             MemoryContentPublisherThread memoryContentPublisherThread = new MemoryContentPublisherThread(memory, producers.get(i), topics.get(i));

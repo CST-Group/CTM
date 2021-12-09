@@ -59,7 +59,7 @@ publishing {
         gpr(MavenPublication) {
             groupId = 'com.github.CST-Group'
             artifactId = 'jdct'
-            version = '0.0.1'
+            version = '0.0.3'
 
             from(components.java)
         }

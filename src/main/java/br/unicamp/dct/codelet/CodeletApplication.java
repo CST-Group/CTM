@@ -28,11 +28,6 @@ public class CodeletApplication {
 
     private void setupCodeletApplication() {
         initializeDistributedMemories();
-        startCodelets();
-    }
-
-    private void startCodelets() {
-        getCodelets().forEach(Codelet::start);
     }
     
     private void initializeDistributedMemories() {
@@ -48,6 +43,7 @@ public class CodeletApplication {
             });
 
             getCodelets().add(codelet);
+            codelet.start();
         });
     }
 

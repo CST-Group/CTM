@@ -1,9 +1,8 @@
-package br.unicamp.dct.kafka;
+package br.unicamp.ctm.memory.kafka;
 
-import br.unicamp.dct.exception.TopicNotFoundException;
-import br.unicamp.dct.kafka.builder.ConsumerBuilder;
-import br.unicamp.dct.kafka.config.TopicConfig;
-import br.unicamp.dct.memory.DistributedMemoryBehavior;
+import br.unicamp.ctm.memory.kafka.exception.TopicNotFoundException;
+import br.unicamp.ctm.memory.kafka.builder.KConsumerBuilder;
+import br.unicamp.ctm.memory.kafka.config.TopicConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.PartitionInfo;
 
@@ -16,7 +15,8 @@ import java.util.stream.Collectors;
 public class TopicConfigProvider {
 
     public static List<TopicConfig> generateTopicConfigsPrefix(String brokers, String prefix, String className) throws TopicNotFoundException {
-        final KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(ConsumerBuilder.buildConsumerProperties(brokers, "any"));
+        final KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(
+            KConsumerBuilder.buildConsumerProperties(brokers, "any"));
         final Map<String, List<PartitionInfo>> topicsInfo = kafkaConsumer.listTopics();
 
         final List<String> topics =
@@ -32,7 +32,7 @@ public class TopicConfigProvider {
         }
 
         return foundTopics.stream().map(topic -> new
-                TopicConfig(topic, DistributedMemoryBehavior.PULLED, className)
+                TopicConfig(topic, KDistributedMemoryBehavior.PULLED, className)
         ).collect(Collectors.toList());
     }
 

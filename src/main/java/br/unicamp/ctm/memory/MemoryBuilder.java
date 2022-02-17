@@ -1,4 +1,4 @@
-package br.unicamp.dct.memory;
+package br.unicamp.ctm.memory;
 
 import br.unicamp.cst.core.entities.MemoryObject;
 

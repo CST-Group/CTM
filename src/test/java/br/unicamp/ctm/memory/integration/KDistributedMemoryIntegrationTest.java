@@ -1,10 +1,9 @@
-package br.unicamp.dct.memory.integration;
+package br.unicamp.ctm.memory.integration;
 
-import br.unicamp.cst.core.entities.Memory;
-import br.unicamp.dct.memory.DistributedMemory;
-import br.unicamp.dct.memory.DistributedMemoryBehavior;
-import br.unicamp.dct.memory.DistributedMemoryType;
-import br.unicamp.dct.kafka.config.TopicConfig;
+import br.unicamp.ctm.memory.kafka.KDistributedMemory;
+import br.unicamp.ctm.memory.kafka.KDistributedMemoryBehavior;
+import br.unicamp.ctm.memory.DistributedMemoryType;
+import br.unicamp.ctm.memory.kafka.config.TopicConfig;
 import junit.framework.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -14,10 +13,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class DistributedMemoryIntegrationTest {
+public class KDistributedMemoryIntegrationTest {
 
-    private DistributedMemory distributedInputMemory;
-    private DistributedMemory distributedOutputMemory;
+    private KDistributedMemory distributedInputMemory;
+    private KDistributedMemory distributedOutputMemory;
     private List<TopicConfig> inputTopicConfigs;
     private List<TopicConfig> outputTopicConfigs;
 
@@ -25,24 +24,20 @@ public class DistributedMemoryIntegrationTest {
         inputTopicConfigs = new ArrayList<>();
         outputTopicConfigs = new ArrayList<>();
 
-        inputTopicConfigs.add(new TopicConfig("topic-1", DistributedMemoryBehavior.PULLED));
-        outputTopicConfigs.add(new TopicConfig("topic-1", DistributedMemoryBehavior.TRIGGERED));
+        inputTopicConfigs.add(new TopicConfig("http://localhost:9092","topic-1", KDistributedMemoryBehavior.PULLED));
+        outputTopicConfigs.add(new TopicConfig("http://localhost:9092", "topic-1", KDistributedMemoryBehavior.TRIGGERED));
 
-        distributedInputMemory = new DistributedMemory(
+        distributedInputMemory = new KDistributedMemory(
                 "MEMORY_TEST_INPUT",
                 DistributedMemoryType.INPUT_MEMORY,
                 inputTopicConfigs
         );
 
-        distributedInputMemory.initMemory("http://localhost:9092");
-
-        distributedOutputMemory = new DistributedMemory(
+        distributedOutputMemory = new KDistributedMemory(
                 "MEMORY_TEST_OUTPUT",
                 DistributedMemoryType.OUTPUT_MEMORY,
                 outputTopicConfigs
         );
-
-        distributedOutputMemory.initMemory("http://localhost:9092");
 
         Thread.sleep(1000);
     }
@@ -51,24 +46,20 @@ public class DistributedMemoryIntegrationTest {
         inputTopicConfigs = new ArrayList<>();
         outputTopicConfigs = new ArrayList<>();
 
-        inputTopicConfigs.add(new TopicConfig(DistributedMemoryBehavior.PULLED, "topic-*"));
-        outputTopicConfigs.add(new TopicConfig("topic-1", DistributedMemoryBehavior.TRIGGERED));
+        inputTopicConfigs.add(new TopicConfig("http://localhost:9092", KDistributedMemoryBehavior.PULLED, "topic-*"));
+        outputTopicConfigs.add(new TopicConfig("http://localhost:9092", "topic-1", KDistributedMemoryBehavior.TRIGGERED));
 
-        distributedInputMemory = new DistributedMemory(
+        distributedInputMemory = new KDistributedMemory(
                 "MEMORY_TEST_INPUT",
                 DistributedMemoryType.INPUT_MEMORY,
                 inputTopicConfigs
         );
 
-        distributedInputMemory.initMemory("http://localhost:9092");
-
-        distributedOutputMemory = new DistributedMemory(
+        distributedOutputMemory = new KDistributedMemory(
                 "MEMORY_TEST_OUTPUT",
                 DistributedMemoryType.OUTPUT_MEMORY,
                 outputTopicConfigs
         );
-
-        distributedOutputMemory.initMemory("http://localhost:9092");
 
         Thread.sleep(1000);
     }
@@ -77,24 +68,20 @@ public class DistributedMemoryIntegrationTest {
         inputTopicConfigs = new ArrayList<>();
         outputTopicConfigs = new ArrayList<>();
 
-        inputTopicConfigs.add(new TopicConfig("topic-3", DistributedMemoryBehavior.PULLED, Integer.class.getName()));
-        outputTopicConfigs.add(new TopicConfig("topic-3", DistributedMemoryBehavior.TRIGGERED));
+        inputTopicConfigs.add(new TopicConfig("http://localhost:9092", "topic-3", KDistributedMemoryBehavior.PULLED, Integer.class.getName()));
+        outputTopicConfigs.add(new TopicConfig("http://localhost:9092","topic-3", KDistributedMemoryBehavior.TRIGGERED));
 
-        distributedInputMemory = new DistributedMemory(
+        distributedInputMemory = new KDistributedMemory(
                 "MEMORY_TEST_INPUT",
                 DistributedMemoryType.INPUT_MEMORY,
                 inputTopicConfigs
         );
 
-        distributedInputMemory.initMemory("http://localhost:9092");
-
-        distributedOutputMemory = new DistributedMemory(
+        distributedOutputMemory = new KDistributedMemory(
                 "MEMORY_TEST_OUTPUT",
                 DistributedMemoryType.OUTPUT_MEMORY,
                 outputTopicConfigs
         );
-
-        distributedOutputMemory.initMemory("http://localhost:9092");
 
         Thread.sleep(1000);
     }

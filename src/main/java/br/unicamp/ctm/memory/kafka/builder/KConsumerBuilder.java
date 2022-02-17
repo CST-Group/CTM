@@ -1,13 +1,8 @@
-package br.unicamp.dct.kafka.builder;
+package br.unicamp.ctm.memory.kafka.builder;
 
-import br.unicamp.cst.core.entities.Memory;
-import br.unicamp.dct.exception.TopicNotFoundException;
-import br.unicamp.dct.kafka.TopicConfigProvider;
-import br.unicamp.dct.kafka.config.TopicConfig;
-import br.unicamp.dct.memory.DistributedMemory;
-import br.unicamp.dct.thread.MemoryContentReceiverThread;
-import kafka.Kafka;
-import kafka.security.auth.Topic;
+import br.unicamp.ctm.memory.kafka.exception.TopicNotFoundException;
+import br.unicamp.ctm.memory.kafka.TopicConfigProvider;
+import br.unicamp.ctm.memory.kafka.config.TopicConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -20,9 +15,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class ConsumerBuilder {
+public class KConsumerBuilder {
 
-    private static final Logger logger = LoggerFactory.getLogger(ConsumerBuilder.class);
+    private static final Logger logger = LoggerFactory.getLogger(KConsumerBuilder.class);
 
     private static KafkaConsumer<String, String> buildConsumer(String brokers, String consumerGroupId, String topic){
 
@@ -68,22 +63,22 @@ public class ConsumerBuilder {
     }
 
 
-    public static Map<TopicConfig, KafkaConsumer<String, String>> generateConsumers(List<TopicConfig> topics, String brokers, String consumerGroupID) {
+    public static Map<TopicConfig, KafkaConsumer<String, String>> generateConsumers(List<TopicConfig> topics, String consumerGroupID) {
 
         Map<TopicConfig, KafkaConsumer<String, String>> consumers = new HashMap<>();
 
         topics.forEach(topic -> {
-            if (topic.getPrefix() != null) {
-                if (!topic.getPrefix().isEmpty()) {
+            if (topic.getRegexPattern() != null) {
+                if (!topic.getRegexPattern().isEmpty()) {
                     try {
                         final List<TopicConfig> foundTopics =
-                                TopicConfigProvider.generateTopicConfigsPrefix(brokers, topic.getPrefix(), topic.getClassName());
+                                TopicConfigProvider.generateTopicConfigsPrefix(brokers, topic.getRegexPattern(), topic.getClassName());
 
                         if (foundTopics.size() == 0) {
-                            throw new TopicNotFoundException(String.format("Topic prefix not found - Prefix - %s.", topic.getPrefix()));
+                            throw new TopicNotFoundException(String.format("Topic prefix not found - Prefix - %s.", topic.getRegexPattern()));
                         }
 
-                        Map<TopicConfig, KafkaConsumer<String, String>> prefixConsumers = generateConsumers(foundTopics, brokers, consumerGroupID);
+                        Map<TopicConfig, KafkaConsumer<String, String>> prefixConsumers = generateConsumers(foundTopics, topic.getBroker(), consumerGroupID);
                         consumers.putAll(prefixConsumers);
                     } catch (TopicNotFoundException e) {
                         logger.error(e.getMessage());

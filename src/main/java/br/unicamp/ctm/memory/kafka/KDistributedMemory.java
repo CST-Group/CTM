@@ -1,30 +1,32 @@
-package br.unicamp.dct.memory;
+package br.unicamp.ctm.memory.kafka;
 
 import br.unicamp.cst.core.entities.Memory;
-import br.unicamp.dct.kafka.builder.ConsumerBuilder;
-import br.unicamp.dct.kafka.builder.ProducerBuilder;
-import br.unicamp.dct.kafka.config.TopicConfig;
-import br.unicamp.dct.thread.MemoryContentPublisherThread;
-import br.unicamp.dct.thread.MemoryContentReceiverThread;
+import br.unicamp.ctm.memory.DistributedMemory;
+import br.unicamp.ctm.memory.DistributedMemoryType;
+import br.unicamp.ctm.memory.kafka.builder.KConsumerBuilder;
+import br.unicamp.ctm.memory.kafka.builder.KProducerBuilder;
+import br.unicamp.ctm.memory.kafka.config.TopicConfig;
+import br.unicamp.ctm.memory.MemoryBuilder;
+import br.unicamp.ctm.memory.kafka.thread.KMemoryContentPublisherThread;
+import br.unicamp.ctm.memory.kafka.thread.KMemoryContentReceiverThread;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.*;
 
-public class DistributedMemory implements Memory {
+public class KDistributedMemory implements Memory, DistributedMemory {
 
     private String name;
-    private String brokers;
     private List<TopicConfig> topicsConfig;
     private DistributedMemoryType type;
     private List<Memory> memories;
-    private List<MemoryContentReceiverThread> memoryContentReceiverThreads;
-    private List<MemoryContentPublisherThread> memoryContentPublisherThreads;
+    private List<KMemoryContentReceiverThread> kMemoryContentReceiverThreads;
+    private List<KMemoryContentPublisherThread> kMemoryContentPublisherThreads;
 
-    private final Logger logger = LoggerFactory.getLogger(DistributedMemory.class);
+    private final Logger logger = LoggerFactory.getLogger(KDistributedMemory.class);
 
-    public DistributedMemory(String name, DistributedMemoryType type, List<TopicConfig> topicsConfig) {
+    public KDistributedMemory(String name, DistributedMemoryType type, List<TopicConfig> topicsConfig) {
         memorySetup(name, type, topicsConfig);
     }
 
@@ -35,21 +37,22 @@ public class DistributedMemory implements Memory {
         this.type = type;
 
         this.memories = new ArrayList<>();
-        this.memoryContentReceiverThreads = new ArrayList<>();
-        this.memoryContentPublisherThreads = new ArrayList<>();
+        this.kMemoryContentReceiverThreads = new ArrayList<>();
+        this.kMemoryContentPublisherThreads = new ArrayList<>();
+
+        initMemory();
+
     }
 
-    public void initMemory(String brokers) {
-        this.setBrokers(brokers);
-
-        if (getType() == DistributedMemoryType.INPUT_MEMORY) {
+    public void initMemory() {
+        if (getType() == DistributedMemoryType.INPUT_MEMORY || getType() == DistributedMemoryType.INPUT_BROADCAST_MEMORY) {
             consumersSetup(this.topicsConfig);
         } else
             producersSetup(this.topicsConfig);
     }
 
     private void consumersSetup(List<TopicConfig> topics) {
-        Map<TopicConfig, KafkaConsumer<String, String>> topicConsumersMap = ConsumerBuilder.generateConsumers(topics, getBrokers(), name);
+        Map<TopicConfig, KafkaConsumer<String, String>> topicConsumersMap = KConsumerBuilder.generateConsumers(topics, name);
 
         topicConsumersMap.forEach((topicConfig, consumer) -> {
             String topicName = topicConfig.getName();
@@ -57,24 +60,24 @@ public class DistributedMemory implements Memory {
             final Memory memory = MemoryBuilder.createMemoryObject(topicName);
             getMemories().add(memory);
 
-            MemoryContentReceiverThread memoryContentReceiverThread = new MemoryContentReceiverThread(memory, consumer, topicConfig);
-            memoryContentReceiverThread.start();
+            KMemoryContentReceiverThread KMemoryContentReceiverThread = new KMemoryContentReceiverThread(memory, consumer, topicConfig);
+            KMemoryContentReceiverThread.start();
 
-            getMemoryWriterThreads().add(memoryContentReceiverThread);
+            getMemoryWriterThreads().add(KMemoryContentReceiverThread);
         });
     }
 
     private void producersSetup(List<TopicConfig> topics) {
-        List<KafkaProducer<String, String>> producers = ProducerBuilder.generateProducers(topics, getBrokers());
+        List<KafkaProducer<String, String>> producers = KProducerBuilder.generateProducers(topics);
 
         for (int i = 0; i < producers.size(); i++) {
             final Memory memory = MemoryBuilder.createMemoryObject(topics.get(i).getName());
             getMemories().add(memory);
 
-            MemoryContentPublisherThread memoryContentPublisherThread = new MemoryContentPublisherThread(memory, producers.get(i), topics.get(i));
-            memoryContentPublisherThread.start();
+            KMemoryContentPublisherThread KMemoryContentPublisherThread = new KMemoryContentPublisherThread(memory, producers.get(i), topics.get(i));
+            KMemoryContentPublisherThread.start();
 
-            getMemoryReaderThreads().add(memoryContentPublisherThread);
+            getMemoryReaderThreads().add(KMemoryContentPublisherThread);
         }
     }
 
@@ -82,6 +85,11 @@ public class DistributedMemory implements Memory {
     public Object getI() {
         final Memory memory = memories.stream().max(Comparator.comparing(Memory::getEvaluation)).orElse(null);
         return memory != null ? memory.getI() : null;
+    }
+
+    public Memory getMemory() {
+        final Memory memory = memories.stream().max(Comparator.comparing(Memory::getEvaluation)).orElse(null);
+        return memory;
     }
 
     public Object getI(int index) {
@@ -141,7 +149,7 @@ public class DistributedMemory implements Memory {
 
     private void notifyReaderThread(int index) {
         if (getType() == DistributedMemoryType.OUTPUT_MEMORY
-                && topicsConfig.get(index).getDistributedMemoryBehavior() == DistributedMemoryBehavior.TRIGGERED) {
+                && topicsConfig.get(index).getDistributedMemoryBehavior() == KDistributedMemoryBehavior.TRIGGERED) {
             Memory memory = memories.get(index);
             synchronized (memory) {
                 memory.notify();
@@ -210,22 +218,15 @@ public class DistributedMemory implements Memory {
         return topicsConfig;
     }
 
-    public List<MemoryContentReceiverThread> getMemoryWriterThreads() {
-        return memoryContentReceiverThreads;
+    public List<KMemoryContentReceiverThread> getMemoryWriterThreads() {
+        return kMemoryContentReceiverThreads;
     }
 
-    public List<MemoryContentPublisherThread> getMemoryReaderThreads() {
-        return memoryContentPublisherThreads;
+    public List<KMemoryContentPublisherThread> getMemoryReaderThreads() {
+        return kMemoryContentPublisherThreads;
     }
 
-    public String getBrokers() {
-        return brokers;
-    }
-
-    public void setBrokers(String brokers) {
-        this.brokers = brokers;
-    }
-
+    @Override
     public DistributedMemoryType getType() {
         return type;
     }

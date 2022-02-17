@@ -1,13 +1,13 @@
-package br.unicamp.dct.thread;
+package br.unicamp.ctm.memory.kafka.thread;
 
 import br.unicamp.cst.core.entities.Memory;
-import br.unicamp.dct.memory.DistributedMemoryBehavior;
-import br.unicamp.dct.kafka.config.TopicConfig;
+import br.unicamp.ctm.memory.kafka.KDistributedMemoryBehavior;
+import br.unicamp.ctm.memory.kafka.config.TopicConfig;
 import com.google.gson.Gson;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
-public class MemoryContentPublisherThread extends Thread {
+public class KMemoryContentPublisherThread extends Thread {
 
     private final Memory memory;
     private Object lastI = null;
@@ -16,7 +16,7 @@ public class MemoryContentPublisherThread extends Thread {
     private final Gson gson;
     private final TopicConfig topicConfig;
 
-    public MemoryContentPublisherThread(Memory memory, KafkaProducer<String, String> kafkaProducer, TopicConfig topicConfig) {
+    public KMemoryContentPublisherThread(Memory memory, KafkaProducer<String, String> kafkaProducer, TopicConfig topicConfig) {
         this.memory = memory;
         this.kafkaProducer = kafkaProducer;
         this.topicConfig = topicConfig;
@@ -28,7 +28,7 @@ public class MemoryContentPublisherThread extends Thread {
     public void run() {
         while (true) {
             try {
-                if(topicConfig.getDistributedMemoryBehavior() == DistributedMemoryBehavior.TRIGGERED) {
+                if(topicConfig.getDistributedMemoryBehavior() == KDistributedMemoryBehavior.TRIGGERED) {
                     synchronized (memory) {
                         memory.wait();
                     }

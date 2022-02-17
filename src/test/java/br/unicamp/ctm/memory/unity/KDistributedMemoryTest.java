@@ -1,6 +1,6 @@
-package br.unicamp.dct.memory.unity;
+package br.unicamp.ctm.memory.unity;
 
-import br.unicamp.dct.memory.DistributedMemory;
+import br.unicamp.ctm.memory.kafka.KDistributedMemory;
 import junit.framework.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -10,13 +10,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class DistributedMemoryTest {
+public class KDistributedMemoryTest {
 
     @Mock
-    DistributedMemory distributedInputMemory;
+    KDistributedMemory distributedInputMemory;
 
     @Mock
-    DistributedMemory distributedOutputMemory;
+    KDistributedMemory distributedOutputMemory;
 
     @Test
     public void shouldHasMessageInInputDistributedMemory() throws InterruptedException {

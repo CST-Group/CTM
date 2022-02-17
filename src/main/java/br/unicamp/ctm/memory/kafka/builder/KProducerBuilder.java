@@ -1,10 +1,6 @@
-package br.unicamp.dct.kafka.builder;
+package br.unicamp.ctm.memory.kafka.builder;
 
-import br.unicamp.cst.core.entities.Memory;
-import br.unicamp.dct.kafka.config.TopicConfig;
-import br.unicamp.dct.thread.MemoryContentReceiverThread;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
+import br.unicamp.ctm.memory.kafka.config.TopicConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -13,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-public class ProducerBuilder {
+public class KProducerBuilder {
 
     public static KafkaProducer<String, String> buildProducer(String brokers) {
         return new KafkaProducer<>(buildProducerProperties(brokers));
@@ -29,13 +25,13 @@ public class ProducerBuilder {
         return properties;
     }
 
-    public static List<KafkaProducer<String, String>> generateProducers(List<TopicConfig> topics, String brokers) {
+    public static List<KafkaProducer<String, String>> generateProducers(List<TopicConfig> topics) {
 
         List<KafkaProducer<String, String>> producers = new ArrayList<>();
 
         topics.forEach(topicConfig -> {
             final KafkaProducer<String, String> producer =
-                    ProducerBuilder.buildProducer(brokers);
+                    KProducerBuilder.buildProducer(topicConfig.getBroker());
 
             producers.add(producer);
         });

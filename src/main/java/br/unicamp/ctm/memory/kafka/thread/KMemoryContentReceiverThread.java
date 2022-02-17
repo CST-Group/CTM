@@ -1,8 +1,8 @@
-package br.unicamp.dct.thread;
+package br.unicamp.ctm.memory.kafka.thread;
 
 import br.unicamp.cst.core.entities.Memory;
 import br.unicamp.cst.core.entities.MemoryObject;
-import br.unicamp.dct.kafka.config.TopicConfig;
+import br.unicamp.ctm.memory.kafka.config.TopicConfig;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 
-public class MemoryContentReceiverThread extends Thread {
+public class KMemoryContentReceiverThread extends Thread {
 
     private final Memory memory;
     private final KafkaConsumer<String, String> kafkaConsumer;
@@ -21,9 +21,9 @@ public class MemoryContentReceiverThread extends Thread {
     private final TopicConfig topicConfig;
 
 
-    private final Logger logger = LoggerFactory.getLogger(MemoryContentReceiverThread.class);
+    private final Logger logger = LoggerFactory.getLogger(KMemoryContentReceiverThread.class);
 
-    public MemoryContentReceiverThread(Memory memory, KafkaConsumer<String, String> kafkaConsumer,
+    public KMemoryContentReceiverThread(Memory memory, KafkaConsumer<String, String> kafkaConsumer,
                                        TopicConfig topicConfig) {
         this.memory = memory;
         this.kafkaConsumer = kafkaConsumer;
@@ -43,7 +43,11 @@ public class MemoryContentReceiverThread extends Thread {
 
                     if (topicConfig.getClassName() != null) {
                         if (!topicConfig.getClassName().trim().equals("")) {
-                            memory.setI(gson.fromJson(String.valueOf(recordMemory.getI()), Class.forName(topicConfig.getClassName())));
+                            if(recordMemory.getI() != null) {
+                                memory.setI(gson.fromJson(String.valueOf(recordMemory.getI()), Class.forName(topicConfig.getClassName())));
+                            } else {
+                                memory.setI(null);
+                            }
                         }
                     } else {
                         memory.setI(recordMemory.getI());

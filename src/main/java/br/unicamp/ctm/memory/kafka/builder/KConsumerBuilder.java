@@ -72,13 +72,13 @@ public class KConsumerBuilder {
                 if (!topic.getRegexPattern().isEmpty()) {
                     try {
                         final List<TopicConfig> foundTopics =
-                                TopicConfigProvider.generateTopicConfigsPrefix(brokers, topic.getRegexPattern(), topic.getClassName());
+                                TopicConfigProvider.generateTopicConfigsPrefix(topic.getBroker(), topic.getRegexPattern(), topic.getClassName());
 
                         if (foundTopics.size() == 0) {
                             throw new TopicNotFoundException(String.format("Topic prefix not found - Prefix - %s.", topic.getRegexPattern()));
                         }
 
-                        Map<TopicConfig, KafkaConsumer<String, String>> prefixConsumers = generateConsumers(foundTopics, topic.getBroker(), consumerGroupID);
+                        Map<TopicConfig, KafkaConsumer<String, String>> prefixConsumers = generateConsumers(foundTopics, consumerGroupID);
                         consumers.putAll(prefixConsumers);
                     } catch (TopicNotFoundException e) {
                         logger.error(e.getMessage());
@@ -90,7 +90,7 @@ public class KConsumerBuilder {
             }
 
             final KafkaConsumer<String, String> consumer =
-                    buildConsumer(brokers, consumerGroupID, topic.getName());
+                    buildConsumer(topic.getBroker(), consumerGroupID, topic.getName());
 
             consumers.put(topic, consumer);
         });

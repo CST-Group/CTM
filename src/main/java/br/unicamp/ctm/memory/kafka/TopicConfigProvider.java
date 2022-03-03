@@ -32,7 +32,7 @@ public class TopicConfigProvider {
         }
 
         return foundTopics.stream().map(topic -> new
-                TopicConfig(topic, KDistributedMemoryBehavior.PULLED, className)
+                TopicConfig(topic, brokers, KDistributedMemoryBehavior.PULLED, className)
         ).collect(Collectors.toList());
     }
 

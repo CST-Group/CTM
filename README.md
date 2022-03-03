@@ -1,3 +1,3 @@
 # CTM
 
-Cognitive System Toolkit for Microservice.
+Cognitive System Toolkit for Microservices.

@@ -6,53 +6,60 @@ import br.unicamp.ctm.memory.kafka.config.TopicConfig;
 import com.google.gson.Gson;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.log4j.Logger;
 
 public class KMemoryContentPublisherThread extends Thread {
 
-    private final Memory memory;
-    private Object lastI = null;
-    private Double lastEvaluate = 0d;
-    private final KafkaProducer<String, String> kafkaProducer;
-    private final Gson gson;
-    private final TopicConfig topicConfig;
+  private final Memory memory;
+  private Object lastI = null;
+  private Double lastEvaluate = 0d;
+  private final KafkaProducer<String, String> kafkaProducer;
+  private final Gson gson;
+  private final TopicConfig topicConfig;
 
-    public KMemoryContentPublisherThread(Memory memory, KafkaProducer<String, String> kafkaProducer, TopicConfig topicConfig) {
-        this.memory = memory;
-        this.kafkaProducer = kafkaProducer;
-        this.topicConfig = topicConfig;
+  private final Logger logger = Logger.getLogger(KMemoryContentReceiverThread.class);
 
-        this.gson = new Gson();
-    }
+  public KMemoryContentPublisherThread(Memory memory, KafkaProducer<String, String> kafkaProducer,
+      TopicConfig topicConfig) {
+    this.memory = memory;
+    this.kafkaProducer = kafkaProducer;
+    this.topicConfig = topicConfig;
 
-    @Override
-    public void run() {
-        while (true) {
-            try {
-                if(topicConfig.getDistributedMemoryBehavior() == KDistributedMemoryBehavior.TRIGGERED) {
-                    synchronized (memory) {
-                        memory.wait();
-                    }
+    this.gson = new Gson();
+  }
 
-                    String json = gson.toJson(memory);
+  @Override
+  public void run() {
+    logger.info(
+        String.format("Content publisher thread initialized for memory %s.", memory.getName()));
 
-                    ProducerRecord<String, String> record = new ProducerRecord<String, String>(topicConfig.getName(), json);
-                    kafkaProducer.send(record);
+    while (true) {
+      try {
+        if (topicConfig.getDistributedMemoryBehavior() == KDistributedMemoryBehavior.TRIGGERED) {
+          synchronized (memory) {
+            memory.wait();
+          }
 
-                } else {
-                    if(memory.getI() != lastI || memory.getEvaluation() != lastEvaluate) {
-                        ProducerRecord<String, String> record = new ProducerRecord<String, String>(topicConfig.getName(), gson.toJson(memory));
-                        kafkaProducer.send(record);
-                        lastI = memory.getI();
-                        lastEvaluate = memory.getEvaluation();
-                    }
+          String json = gson.toJson(memory);
 
-                    Thread.sleep(10);
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+          ProducerRecord<String, String> record = new ProducerRecord<String, String>(
+              topicConfig.getName(), json);
+          kafkaProducer.send(record);
+
+        } else {
+          if (memory.getI() != lastI || memory.getEvaluation() != lastEvaluate) {
+            ProducerRecord<String, String> record = new ProducerRecord<String, String>(
+                topicConfig.getName(), gson.toJson(memory));
+            kafkaProducer.send(record);
+            lastI = memory.getI();
+            lastEvaluate = memory.getEvaluation();
+          }
+
+          Thread.sleep(10);
         }
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
+  }
 }

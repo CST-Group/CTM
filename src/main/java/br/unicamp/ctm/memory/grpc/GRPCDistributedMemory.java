@@ -1,6 +1,7 @@
 package br.unicamp.ctm.memory.grpc;
 
 import br.unicamp.cst.core.entities.Memory;
+import br.unicamp.cst.core.entities.MemoryObserver;
 import br.unicamp.ctm.memory.DistributedMemory;
 import br.unicamp.ctm.memory.DistributedMemoryType;
 
@@ -31,6 +32,16 @@ public class GRPCDistributedMemory implements Memory, DistributedMemory {
   }
 
   @Override
+  public void setType(String type) {
+
+  }
+
+  @Override
+  public void setName(String name) {
+
+  }
+
+  @Override
   public void setEvaluation(Double eval) {
 
   }
@@ -38,6 +49,11 @@ public class GRPCDistributedMemory implements Memory, DistributedMemory {
   @Override
   public Long getTimestamp() {
     return null;
+  }
+
+  @Override
+  public void addMemoryObserver(MemoryObserver memoryObserver) {
+
   }
 
   @Override

@@ -8,40 +8,51 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import org.apache.log4j.Logger;
 
 public class KProducerBuilder {
 
-    public static KafkaProducer<String, String> buildProducer(String brokers) {
-        return new KafkaProducer<>(buildProducerProperties(brokers));
-    }
+  private static final Logger logger = Logger.getLogger(KProducerBuilder.class);
 
-    public static Properties buildProducerProperties(String brokers) {
+  public static KafkaProducer<String, String> buildProducer(String brokers) {
+    return new KafkaProducer<>(buildProducerProperties(brokers));
+  }
 
-        Properties properties = new Properties();
-        properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers);
-        properties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        properties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+  public static Properties buildProducerProperties(String brokers) {
 
-        return properties;
-    }
+    Properties properties = new Properties();
+    properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers);
+    properties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+        StringSerializer.class.getName());
+    properties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+        StringSerializer.class.getName());
 
-    public static List<KafkaProducer<String, String>> generateProducers(List<TopicConfig> topics) {
+    return properties;
+  }
 
-        List<KafkaProducer<String, String>> producers = new ArrayList<>();
+  public static List<KafkaProducer<String, String>> generateProducers(List<TopicConfig> topics) {
 
-        topics.forEach(topicConfig -> {
-            final KafkaProducer<String, String> producer =
-                    KProducerBuilder.buildProducer(topicConfig.getBroker());
+    List<KafkaProducer<String, String>> producers = new ArrayList<>();
 
-            producers.add(producer);
-        });
+    topics.forEach(topicConfig -> {
 
-        return producers;
-    }
+      logger.info(String.format(
+          "Creating producer for topic configuration - Name: %s - Broker: %s - Class: %s - Behavior Type: %s",
+          topicConfig.getName(),
+          topicConfig.getBroker(),
+          topicConfig.getClassName(),
+          topicConfig.getDistributedMemoryBehavior()));
 
+      final KafkaProducer<String, String> producer =
+          KProducerBuilder.buildProducer(topicConfig.getBroker());
 
+      logger.info(String.format("Producer created for topic %s.", topicConfig.getName()));
 
+      producers.add(producer);
+    });
 
+    return producers;
+  }
 
 
 }

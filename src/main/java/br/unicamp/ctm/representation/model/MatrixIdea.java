@@ -74,4 +74,25 @@ public class MatrixIdea {
   public void setDefaultValue(double defaultValue) {
     this.defaultValue = defaultValue;
   }
+
+  public Double getValueFromDictionary(String word) {
+
+    if (getDictionary().containsKey(word)) {
+      return getDictionary().get(word);
+    } else {
+      if (!getDictionary().isEmpty()) {
+        Double value = getDictionary().entrySet().stream()
+            .max((wordEntry1, wordEntry2) -> wordEntry1.getValue() > wordEntry2.getValue() ? 1 : -1)
+            .get()
+            .getValue();
+        getDictionary().put(word, value + 1);
+
+        return value + 1;
+      } else {
+        getDictionary().put(word, 0d);
+
+        return 0d;
+      }
+    }
+  }
 }

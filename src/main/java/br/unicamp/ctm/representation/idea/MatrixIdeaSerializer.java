@@ -27,7 +27,7 @@ public class MatrixIdeaSerializer {
 
     if (idea != null) {
 
-      setNameValue(idea, matrixIdea.getDictionary(), matrixIdea.getMatrix(), (int) idea.getId());
+      setNameValue(idea, matrixIdea, matrixIdea.getMatrix(), (int) idea.getId());
       setTypeValue(matrixIdea.getMatrix(), idea.getType(), (int) idea.getId());
       setMetadataValue(idea, matrixIdea.getMatrix(), matrixIdea.getDefaultValue(), (int) idea.getId());
       valueAnalyse(matrixIdea, idea, matrixIdea.getMatrix(), (int) idea.getId());
@@ -64,7 +64,7 @@ public class MatrixIdeaSerializer {
     for (Idea childIdea : idea.getL()) {
 
       setLinkValue(matrix, (int) idea.getId(), (int) childIdea.getId(), bidirectional);
-      setNameValue(childIdea, matrixIdea.getDictionary(), matrix, (int) childIdea.getId());
+      setNameValue(childIdea, matrixIdea, matrix, (int) childIdea.getId());
       setTypeValue(matrix, childIdea.getType(), (int) childIdea.getId());
       setMetadataValue(childIdea, matrix, matrixIdea.getDefaultValue(), (int) childIdea.getId());
       valueAnalyse(matrixIdea, childIdea, matrix, (int) childIdea.getId());
@@ -75,9 +75,9 @@ public class MatrixIdeaSerializer {
     return matrix;
   }
 
-  private void setNameValue(Idea idea, Map<String, Double> dictionary, double[][] matrix, int i) {
-    if (idea.getName() != null && dictionary.get(idea.getName()) != null) {
-      setValue(matrix, i, columns, dictionary.get(idea.getName()), false);
+  private void setNameValue(Idea idea, MatrixIdea matrixIdea, double[][] matrix, int i) {
+    if (idea.getName() != null && matrixIdea.getValueFromDictionary(idea.getName()) != null) {
+      setValue(matrix, i, columns, matrixIdea.getValueFromDictionary(idea.getName()), false);
     }
   }
 
@@ -116,7 +116,11 @@ public class MatrixIdeaSerializer {
       }
     } else {
       if (ValueValidation.isPrimitive(idea.getValue())) {
-        setValue(matrix, childIdeaId, columns + 4, (double) idea.getValue(), false);
+        if(idea.getValue().getClass().equals(Boolean.class)) {
+          setValue(matrix, childIdeaId, columns + 4, (Boolean) idea.getValue() ? 1d: 0d, false);
+        } else {
+          setValue(matrix, childIdeaId, columns + 4, (double) idea.getValue(), false);
+        }
       } else if (ValueValidation.isString(idea.getValue())) {
         if (matrixIdea.getDictionary().get((String) idea.getValue()) != null) {
           Double value = matrixIdea.getDictionary().get((String) idea.getValue());
@@ -136,4 +140,7 @@ public class MatrixIdeaSerializer {
       matrix[j][i] = value;
     }
   }
+
+
+
 }

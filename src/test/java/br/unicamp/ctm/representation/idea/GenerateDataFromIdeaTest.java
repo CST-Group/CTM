@@ -55,17 +55,17 @@ public class GenerateDataFromIdeaTest {
       dataSamples.add(new DataSample(x, planMatrixIdea.getMatrix()));
     }
 
-    int mountByFile = 300;
-
-    for (int i = 0; i <dataSamples.size()/mountByFile; i++) {
-      String json = gson.toJson(dataSamples.subList(i*mountByFile, (i+1) * mountByFile));
-
-      FileWriter fileWriter = new FileWriter("./src/test/resources/dataTraining_" + (6+i) + ".json");
-      BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-
-      bufferedWriter.write(json);
-      bufferedWriter.close();
-    }
+//    int mountByFile = 300;
+//
+//    for (int i = 0; i <dataSamples.size()/mountByFile; i++) {
+//      String json = gson.toJson(dataSamples.subList(i*mountByFile, (i+1) * mountByFile));
+//
+//      FileWriter fileWriter = new FileWriter("./src/test/resources/dataTraining_" + (6+i) + ".json");
+//      BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+//
+//      bufferedWriter.write(json);
+//      bufferedWriter.close();
+//    }
 
   }
 

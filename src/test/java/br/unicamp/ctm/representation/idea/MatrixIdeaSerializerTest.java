@@ -12,7 +12,7 @@ public class MatrixIdeaSerializerTest {
 
   @Before
   public void setup() {
-    matrixIdeaSerializer = new MatrixIdeaSerializer(10, 10, 3);
+    matrixIdeaSerializer = new MatrixIdeaSerializer(Integer.class, 10, 10, 3);
   }
 
   private Idea initialize() {

@@ -9,7 +9,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 
-public class MatrixIdeaDeserializer {
+public class MatrixIdeaDeserializer<T> {
+
+  private ValueConverter valueConverter;
+
+  public MatrixIdeaDeserializer() {
+    valueConverter = new ValueConverter();
+  }
 
   public Idea deserialize(MatrixIdea matrixIdea) {
 
@@ -22,14 +28,15 @@ public class MatrixIdeaDeserializer {
 
   private void generateIdeaGraph(MatrixIdea matrixIdea, List<Idea> ideaList) {
 
-    double[][] matrix = matrixIdea.getMatrix();
+    T[][] matrix = (T[][]) matrixIdea.getMatrix();
+    Map<String, Integer> dictionary = matrixIdea.getDictionary();
 
     for (int i = 0; i < matrix.length; i++) {
       Idea idea = null;
 
       int finalI = i;
 
-      Optional<Entry<String, Double>> entryOptional = matrixIdea.getDictionary().entrySet().stream()
+      Optional<Entry<String, Integer>> entryOptional = dictionary.entrySet().stream()
           .filter(entry -> entry.getValue().equals(matrix[finalI][matrix.length]))
           .findFirst();
 
@@ -44,13 +51,14 @@ public class MatrixIdeaDeserializer {
 
       for (int j = 0; j < matrix.length; j++) {
 
-        if (matrix[i][j] == 1d) {
+        if ((int)matrix[i][j]  != 0) {
 
           Idea childIdea = null;
 
           int finalJ = j;
 
-          entryOptional = matrixIdea.getDictionary().entrySet().stream()
+
+          entryOptional = dictionary.entrySet().stream()
               .filter(entry -> entry.getValue().equals(matrix[finalJ][matrix.length]))
               .findFirst();
 
@@ -69,12 +77,12 @@ public class MatrixIdeaDeserializer {
     }
   }
 
-  private void setType(Idea idea, double[][] matrix, int i) {
+  private void setType(Idea idea, T[][] matrix, int i) {
     idea.setType((int) matrix[i][matrix.length + 1]);
   }
 
-  private void setValue(Idea idea, double[][] matrix, Map<String, Double> dictionary, int i) {
-    Optional<Entry<Class, Double>> entryOptional = MatrixIdeaMetadataValues.getMetadataMap()
+  private void setValue(Idea idea, T[][] matrix, Map<String, Integer> dictionary, int i) {
+    Optional<Entry<Class, Integer>> entryOptional = MatrixIdeaMetadataValues.getMetadataMap()
         .entrySet().stream().filter(entry -> entry.getValue() == matrix[i][matrix.length + 2])
         .findFirst();
 
@@ -86,17 +94,17 @@ public class MatrixIdeaDeserializer {
         int length = (int) matrix[i][matrix.length + 3];
 
         if (clazz.getCanonicalName().equals(double[].class.getCanonicalName())) {
-          idea.setValue(ValueConverter.extractDoubleArray(matrix, length, i));
+          idea.setValue(valueConverter.extractDoubleArray(matrix, length, i));
         } else if (clazz.getCanonicalName().equals(int[].class.getCanonicalName())) {
-          idea.setValue(ValueConverter.extractIntArray(matrix, length, i));
+          idea.setValue(valueConverter.extractIntArray(matrix, length, i));
         } else if (clazz.getCanonicalName().equals(float[].class.getCanonicalName())) {
-          idea.setValue(ValueConverter.extractFloatArray(matrix, length, i));
+          idea.setValue(valueConverter.extractFloatArray(matrix, length, i));
         } else if (clazz.getCanonicalName().equals(short[].class.getCanonicalName())) {
-          idea.setValue(ValueConverter.extractShortArray(matrix, length, i));
+          idea.setValue(valueConverter.extractShortArray(matrix, length, i));
         } else if (clazz.getCanonicalName().equals(boolean[].class.getCanonicalName())) {
-          idea.setValue(ValueConverter.extractBooleanArray(matrix, length, i));
+          idea.setValue(valueConverter.extractBooleanArray(matrix, length, i));
         } else if (clazz.getCanonicalName().equals(long[].class.getCanonicalName())) {
-          idea.setValue(ValueConverter.extractLongArray(matrix, length, i));
+          idea.setValue(valueConverter.extractLongArray(matrix, length, i));
         }
 
       } else if (ValueValidation.isPrimitive(clazz)) {
@@ -110,7 +118,7 @@ public class MatrixIdeaDeserializer {
         } else if (clazz.getCanonicalName().equals(float.class.getCanonicalName())) {
           idea.setValue((float) matrix[i][matrix.length + 4]);
         } else if (clazz.getCanonicalName().equals(boolean.class.getCanonicalName())) {
-          idea.setValue(matrix[i][matrix.length + 4] == 1);
+          idea.setValue((int)matrix[i][matrix.length + 4] == 1);
         } else if (clazz.getCanonicalName().equals(short.class.getCanonicalName())) {
           idea.setValue((short) matrix[i][matrix.length + 4]);
         } else if (clazz.getCanonicalName().equals(byte.class.getCanonicalName())) {
@@ -119,7 +127,7 @@ public class MatrixIdeaDeserializer {
 
       } else if (ValueValidation.isString(clazz)) {
 
-        Optional<Entry<String, Double>> entryValueOptional = dictionary.entrySet().stream()
+        Optional<Entry<String, Integer>> entryValueOptional = dictionary.entrySet().stream()
             .filter(entry -> entry.getValue().equals(matrix[i][matrix.length + 4])).findFirst();
 
         entryValueOptional.ifPresent(
@@ -140,6 +148,10 @@ public class MatrixIdeaDeserializer {
     }
 
     return childIdea;
+  }
+
+  private T castToGeneric(Object object) {
+    return (T) getClass().getGenericSuperclass().getClass().cast(object);
   }
 
 }

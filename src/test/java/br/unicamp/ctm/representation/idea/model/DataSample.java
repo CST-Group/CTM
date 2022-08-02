@@ -1,10 +1,10 @@
 package br.unicamp.ctm.representation.idea.model;
 
-public class DataSample {
-  private double[][][] x;
-  private double[][] y;
+public class DataSample<T> {
+  private T[][][] x;
+  private T[][] y;
 
-  public DataSample(double[][][] x, double[][] y) {
+  public DataSample(T[][][] x, T[][] y) {
     this.x = x;
     this.y = y;
   }

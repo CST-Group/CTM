@@ -4,112 +4,138 @@ package br.unicamp.ctm.representation.idea;
 import br.unicamp.ctm.representation.converter.ValueConverter;
 import br.unicamp.ctm.representation.model.MatrixIdea;
 import br.unicamp.ctm.representation.validation.ValueValidation;
+import java.lang.reflect.Array;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-public class MatrixIdeaSerializer {
+public class MatrixIdeaSerializer<T> {
 
+  private final Class<T> clazz;
   private int size;
   private int rows;
   private int columns;
+  private ValueConverter<T> valueConverter;
+  private T defaultValue;
+  private T activeValue;
 
-  public MatrixIdeaSerializer(int rows, int columns, int size) {
+  public MatrixIdeaSerializer(Class<T> clazz, int rows, int columns, int size) {
     this.size = size;
     this.rows = rows;
     this.columns = columns;
+    this.valueConverter = new ValueConverter<>();
+    this.clazz = clazz;
+    this.defaultValue = castToGeneric(0);
+    this.activeValue = castToGeneric(1);
   }
 
-  public MatrixIdea serialize(Idea idea, Map<String, Double> dictionary, double defaultValue,
+  public MatrixIdea serialize(Idea idea, Map<String, Double> dictionary, T defaultValue, T activeValue,
       boolean bidirectional)
       throws Exception {
-    MatrixIdea matrixIdea = MatrixIdeaBuilder.build(rows, columns, size, defaultValue);
+    MatrixIdea matrixIdea = new MatrixIdeaBuilder<T>(clazz).build(rows, columns, size, defaultValue);
     matrixIdea.setDictionary(dictionary);
 
     if (idea != null) {
 
-      setNameValue(idea, matrixIdea, matrixIdea.getMatrix(), (int) idea.getId());
-      setTypeValue(matrixIdea.getMatrix(), idea.getType(), (int) idea.getId());
-      setMetadataValue(idea, matrixIdea.getMatrix(), matrixIdea.getDefaultValue(), (int) idea.getId());
-      valueAnalyse(matrixIdea, idea, matrixIdea.getMatrix(), (int) idea.getId());
+      setNameValue(idea, matrixIdea, (T[][]) matrixIdea.getMatrix(), (int) idea.getId());
+      setTypeValue((T[][]) matrixIdea.getMatrix(), castToGeneric(idea.getType()), (int) idea.getId());
+      setMetadataValue(idea, (T[][]) matrixIdea.getMatrix(), castToGeneric(matrixIdea.getDefaultValue()), (int) idea.getId());
+      valueAnalyse(matrixIdea, idea, (T[][]) matrixIdea.getMatrix(), (int) idea.getId());
 
-      matrixIdea.setMatrix(generateMatrix(matrixIdea, idea, matrixIdea.getMatrix(), bidirectional));
+      matrixIdea.setMatrix(generateMatrix(matrixIdea, idea, (T[][])  matrixIdea.getMatrix(), activeValue, bidirectional));
 
     } else {
       throw new Exception("Idea Graph is null.");
     }
 
-    return matrixIdea;
+    return completeMatrix(matrixIdea);
   }
 
   public MatrixIdea serialize(Idea idea) throws Exception {
-    return serialize(idea, new HashMap<>(), 0, true);
+    return serialize(idea, new HashMap<>(), castToGeneric(0), castToGeneric(1), true);
+  }
+
+  public MatrixIdea serialize(Idea idea, T defaultValue, T activeValue) throws Exception {
+    return serialize(idea, new HashMap<>(), castToGeneric(defaultValue), castToGeneric(activeValue), true);
+  }
+
+  public MatrixIdea serialize(Idea idea, T defaultValue, T activeValue, boolean bidirectional) throws Exception {
+    return serialize(idea, new HashMap<>(), castToGeneric(defaultValue), castToGeneric(activeValue), bidirectional);
+  }
+
+  public MatrixIdea serialize(Idea idea, T defaultValue) throws Exception {
+    return serialize(idea, new HashMap<>(), castToGeneric(defaultValue), castToGeneric(1), true);
+  }
+
+  public MatrixIdea serialize(Idea idea, T defaultValue, boolean bidirectional) throws Exception {
+    return serialize(idea, new HashMap<>(), castToGeneric(defaultValue), castToGeneric(1), bidirectional);
   }
 
   public MatrixIdea serialize(Idea idea, boolean bidirectional) throws Exception {
-    return serialize(idea, new HashMap<>(), 0, bidirectional);
+    return serialize(idea, new HashMap<>(), castToGeneric(0), castToGeneric(1), bidirectional);
   }
 
   public MatrixIdea serialize(Idea idea, Map<String, Double> dictionary, boolean bidirectional)
       throws Exception {
-    return serialize(idea, dictionary, 0, bidirectional);
+    return serialize(idea, dictionary, castToGeneric(0), castToGeneric(1), bidirectional);
   }
 
   public MatrixIdea serialize(Idea idea, Map<String, Double> dictionary) throws Exception {
-    return serialize(idea, dictionary, 0, true);
+    return serialize(idea, dictionary, castToGeneric(0), castToGeneric(1), true);
   }
 
-  private double[][] generateMatrix(MatrixIdea matrixIdea, Idea idea, double[][] matrix,
+  private T[][] generateMatrix(MatrixIdea matrixIdea, Idea idea, T[][] matrix, T activeValue,
       boolean bidirectional) {
 
     for (Idea childIdea : idea.getL()) {
 
-      setLinkValue(matrix, (int) idea.getId(), (int) childIdea.getId(), bidirectional);
+      setLinkValue(matrix, (int) idea.getId(), (int) childIdea.getId(), activeValue, bidirectional);
       setNameValue(childIdea, matrixIdea, matrix, (int) childIdea.getId());
-      setTypeValue(matrix, childIdea.getType(), (int) childIdea.getId());
-      setMetadataValue(childIdea, matrix, matrixIdea.getDefaultValue(), (int) childIdea.getId());
+      setTypeValue(matrix, castToGeneric(childIdea.getType()), (int) childIdea.getId());
+      setMetadataValue(childIdea, matrix, castToGeneric(matrixIdea.getDefaultValue()), (int) childIdea.getId());
       valueAnalyse(matrixIdea, childIdea, matrix, (int) childIdea.getId());
 
-      generateMatrix(matrixIdea, childIdea, matrix, bidirectional);
+      generateMatrix(matrixIdea, childIdea, matrix, activeValue, bidirectional);
     }
 
     return matrix;
   }
 
-  private void setNameValue(Idea idea, MatrixIdea matrixIdea, double[][] matrix, int i) {
+  private void setNameValue(Idea idea, MatrixIdea<T> matrixIdea, T[][] matrix, int i) {
     if (idea.getName() != null && matrixIdea.getValueFromDictionary(idea.getName()) != null) {
-      setValue(matrix, i, columns, matrixIdea.getValueFromDictionary(idea.getName()), false);
+      setValue(matrix, i, columns, castToGeneric(matrixIdea.getValueFromDictionary(idea.getName())), false);
     }
   }
 
-  private void setMetadataValue(Idea idea, double[][] matrix, double defaultValue, int i) {
+  private void setMetadataValue(Idea idea, T[][] matrix, T defaultValue, int i) {
     if (idea.getValue() != null) {
-      Double metadataValue = MatrixIdeaMetadataValues.getMetadataMap()
+      Integer metadataValue = MatrixIdeaMetadataValues.getMetadataMap()
           .get(idea.getValue().getClass());
       setValue(matrix, i, columns + 2,
-          metadataValue != null ? metadataValue : defaultValue, false);
+          castToGeneric(metadataValue != null ? metadataValue : defaultValue), false);
 
       int length = 0;
 
       if (ValueValidation.isArray(idea.getValue())) {
-        double[] values = ValueConverter.convertToDoubleArray(idea.getValue());
+        T[] values = valueConverter.convertToGenericArray(idea.getValue());
         length = values.length;
       }
 
-      setValue(matrix, i, columns + 3, length, false);
+      setValue(matrix, i, columns + 3, castToGeneric(length), false);
     }
   }
 
-  private void setTypeValue(double[][] matrix, int type, int i) {
+  private void setTypeValue(T[][] matrix, T type, int i) {
     setValue(matrix, i, columns + 1, type, false);
   }
 
-  private void setLinkValue(double[][] matrix, int i, int j, boolean birectional) {
-    setValue(matrix, i, j, 1, birectional);
+  private void setLinkValue(T[][] matrix, int i, int j, T activeValue, boolean bidirectional) {
+    setValue(matrix, i, j, castToGeneric(activeValue), bidirectional);
   }
 
-  private void valueAnalyse(MatrixIdea matrixIdea, Idea idea, double[][] matrix, int childIdeaId) {
+  private void valueAnalyse(MatrixIdea<T> matrixIdea, Idea idea, T[][] matrix, int childIdeaId) {
     if (ValueValidation.isArray(idea.getValue())) {
-      double[] values = ValueConverter.convertToDoubleArray(idea.getValue());
+      T[] values = valueConverter.convertToGenericArray(idea.getValue());
       for (int i = 0; i < values.length; i++) {
         setValue(matrix, childIdeaId, columns + 4 + i, values[i],
             false);
@@ -117,22 +143,22 @@ public class MatrixIdeaSerializer {
     } else {
       if (ValueValidation.isPrimitive(idea.getValue())) {
         if(idea.getValue().getClass().equals(Boolean.class)) {
-          setValue(matrix, childIdeaId, columns + 4, (Boolean) idea.getValue() ? 1d: 0d, false);
+          setValue(matrix, childIdeaId, columns + 4, castToGeneric((Boolean) idea.getValue() ? 1d: 0d), false);
         } else {
-          setValue(matrix, childIdeaId, columns + 4, (double) idea.getValue(), false);
+          setValue(matrix, childIdeaId, columns + 4, castToGeneric(idea.getValue()), false);
         }
       } else if (ValueValidation.isString(idea.getValue())) {
         if (matrixIdea.getDictionary().get((String) idea.getValue()) != null) {
-          Double value = matrixIdea.getDictionary().get((String) idea.getValue());
+          Integer value = matrixIdea.getDictionary().get((String) idea.getValue());
           if (value != null) {
-            setValue(matrix, childIdeaId, columns + 4, value, false);
+            setValue(matrix, childIdeaId, columns + 4, castToGeneric(value), false);
           }
         }
       }
     }
   }
 
-  private void setValue(double[][] matrix, int i, int j, double value,
+  private void setValue(T[][] matrix, int i, int j, T value,
       boolean bidirectional) {
     matrix[i][j] = value;
 
@@ -141,6 +167,43 @@ public class MatrixIdeaSerializer {
     }
   }
 
+  private MatrixIdea<T> completeMatrix(MatrixIdea<T> matrixIdea) {
 
+    int row = matrixIdea.getMatrix().length;
+    int columns = matrixIdea.getMatrix()[0].length;
 
+    T[][] newMatrix = (T[][]) Array.newInstance(clazz, columns, columns);
+
+    for (int i = 0; i < columns; i++) {
+      for (int j = 0; j < columns; j++) {
+        if(i < row) {
+          newMatrix[i][j] = matrixIdea.getMatrix()[i][j];
+        } else {
+          newMatrix[i][j] = castToGeneric(0d);
+        }
+      }
+    }
+
+    matrixIdea.setMatrix(newMatrix);
+
+    return matrixIdea;
+  }
+
+  private T castToGeneric(Object object) {
+
+    if (clazz.equals(Integer.class)) {
+      return clazz.cast(((Number)object).intValue());
+    } else if (clazz.equals(Double.class)) {
+      return clazz.cast(((Number)object).doubleValue());
+    } else if (clazz.equals(Float.class)) {
+      return clazz.cast(((Number)object).floatValue());
+    } else if (clazz.equals(Long.class)) {
+      return clazz.cast(((Number)object).longValue());
+    } else if (clazz.equals(Short.class)) {
+      return clazz.cast(((Number)object).shortValue());
+    }
+
+    return clazz.cast(object);
+
+  }
 }

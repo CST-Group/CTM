@@ -1,23 +1,24 @@
 package br.unicamp.ctm.representation.converter;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ValueConverter {
+public class ValueConverter<T> {
 
-  public static double[] extractDoubleArray(double[][] matrix, int length, int i) {
+  public double[] extractDoubleArray(T[][] matrix, int length, int i) {
     double[] value = new double[length];
     for (int k = 0; k < value.length; k++) {
       if (k + matrix.length + 4 < matrix[i].length) {
-        value[k] = matrix[i][k + matrix.length + 4];
+        value[k] = (double)matrix[i][k + matrix.length + 4];
       }
     }
     return value;
   }
 
-  public static int[] extractIntArray(double[][] matrix, int length, int i) {
+  public int[] extractIntArray(T[][] matrix, int length, int i) {
     int[] value = new int[length];;
     for (int k = 0; k < value.length; k++) {
       if (k + matrix.length + 4 < matrix[i].length) {
@@ -27,7 +28,7 @@ public class ValueConverter {
     return value;
   }
 
-  public static float[] extractFloatArray(double[][] matrix, int length, int i) {
+  public float[] extractFloatArray(T[][] matrix, int length, int i) {
     float[] value = new float[length];;
     for (int k = 0; k < value.length; k++) {
       if (k + matrix.length + 4 < matrix[i].length) {
@@ -37,7 +38,7 @@ public class ValueConverter {
     return value;
   }
 
-  public static long[] extractLongArray(double[][] matrix, int length, int i) {
+  public long[] extractLongArray(T[][] matrix, int length, int i) {
     long[] value = new long[length];
     for (int k = 0; k < value.length; k++) {
       if (k + matrix.length + 4 < matrix[i].length) {
@@ -47,7 +48,7 @@ public class ValueConverter {
     return value;
   }
 
-  public static short[] extractShortArray(double[][] matrix, int length, int i) {
+  public short[] extractShortArray(T[][] matrix, int length, int i) {
     short[] value = new short[length];
     for (int k = 0; k < value.length; k++) {
       if (k + matrix.length + 4 < matrix[i].length) {
@@ -57,17 +58,17 @@ public class ValueConverter {
     return value;
   }
 
-  public static boolean[] extractBooleanArray(double[][] matrix, int length, int i) {
+  public boolean[] extractBooleanArray(T[][] matrix, int length, int i) {
     boolean[] value = new boolean[length];
     for (int k = 0; k < value.length; k++) {
       if (k + matrix.length + 4 < matrix[i].length) {
-        value[k] = matrix[i][k + matrix.length + 4] == 1d;
+        value[k] = (int)matrix[i][k + matrix.length + 4] == 1d;
       }
     }
     return value;
   }
 
-  public static double[] convertToDoubleArray(Object object) {
+  public double[] convertToDoubleArray(Object object) {
 
     List list = convertToList(object);
     double[] value = new double[list.size()];
@@ -79,8 +80,19 @@ public class ValueConverter {
     return value;
   }
 
+  public T[] convertToGenericArray(Object object) {
 
-  public static List convertToList(Object object) {
+    List list = convertToList(object);
+
+    T[] value = (T[]) Array.newInstance(getClass().getGenericSuperclass().getClass(), list.size());
+    for (int i = 0; i < list.size(); i++) {
+      value[i] = (T) list.get(i);
+    }
+
+    return value;
+  }
+
+  public List convertToList(Object object) {
 
     List list = new ArrayList();
     if (object instanceof int[]) {

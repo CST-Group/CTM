@@ -1,46 +1,47 @@
 package br.unicamp.ctm.representation.model;
 
+import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MatrixIdea {
+public class MatrixIdea<T> {
 
-  private double[][] matrix;
-  private Map<String, Double> dictionary;
-  private double defaultValue;
+  private T[][] matrix;
+  private Map<String, Integer> dictionary;
+  private T defaultValue;
 
-  public MatrixIdea(double[][] matrix) {
+  public MatrixIdea(T[][] matrix) {
     this.setMatrix(matrix);
     this.setDictionary(new HashMap<>());
   }
 
-  public MatrixIdea(double[][] matrix, Map<String, Double> dictionary) {
+  public MatrixIdea(T[][] matrix, Map<String, Integer> dictionary) {
     this.setMatrix(matrix);
     this.setDictionary(dictionary);
   }
 
   public MatrixIdea(int rows, int columns) {
-    this.setMatrix(new double[rows][columns]);
+    this.setMatrix((T[][]) Array.newInstance(getClass().getGenericSuperclass().getClass(), rows, columns));
   }
 
-  public MatrixIdea(int rows, int columns, Map<String, Double> dictionary) {
-    this.setMatrix(new double[rows][columns]);
+  public MatrixIdea(int rows, int columns, Map<String, Integer> dictionary) {
+    this.setMatrix((T[][]) Array.newInstance(getClass().getGenericSuperclass().getClass(), rows, columns));
     this.setDictionary(dictionary);
   }
 
-  public double[][] getMatrix() {
+  public T[][] getMatrix() {
     return matrix;
   }
 
-  public void setMatrix(double[][] matrix) {
+  public void setMatrix(T[][] matrix) {
     this.matrix = matrix;
   }
 
-  public Map<String, Double> getDictionary() {
+  public Map<String, Integer> getDictionary() {
     return dictionary;
   }
 
-  public void setDictionary(Map<String, Double> dictionary) {
+  public void setDictionary(Map<String, Integer> dictionary) {
     this.dictionary = dictionary;
   }
 
@@ -67,21 +68,21 @@ public class MatrixIdea {
     return stringBuilder.toString();
   }
 
-  public double getDefaultValue() {
+  public T getDefaultValue() {
     return defaultValue;
   }
 
-  public void setDefaultValue(double defaultValue) {
+  public void setDefaultValue(T defaultValue) {
     this.defaultValue = defaultValue;
   }
 
-  public Double getValueFromDictionary(String word) {
+  public Integer getValueFromDictionary(String word) {
 
     if (getDictionary().containsKey(word)) {
       return getDictionary().get(word);
     } else {
       if (!getDictionary().isEmpty()) {
-        Double value = getDictionary().entrySet().stream()
+        Integer value = getDictionary().entrySet().stream()
             .max((wordEntry1, wordEntry2) -> wordEntry1.getValue() > wordEntry2.getValue() ? 1 : -1)
             .get()
             .getValue();
@@ -89,9 +90,9 @@ public class MatrixIdea {
 
         return value + 1;
       } else {
-        getDictionary().put(word, 0d);
+        getDictionary().put(word, 0);
 
-        return 0d;
+        return 0;
       }
     }
   }

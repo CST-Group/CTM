@@ -3,30 +3,31 @@ package br.unicamp.ctm.representation.idea;
 import br.unicamp.ctm.representation.idea.model.DataSample;
 import br.unicamp.ctm.representation.model.MatrixIdea;
 import com.google.gson.Gson;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
+import net.bytebuddy.description.field.FieldDescription.InGenericShape;
 import org.junit.Before;
 import org.junit.Test;
 
 public class GenerateDataFromIdeaTest {
 
-  private MatrixIdeaSerializer matrixIdeaSerializer;
+  private MatrixIdeaSerializer<Double> matrixIdeaSerializer;
 
   @Before
   public void setup() {
-    matrixIdeaSerializer = new MatrixIdeaSerializer(60, 60, 7);
+    matrixIdeaSerializer = new MatrixIdeaSerializer<>(Double.class, 69, 69, 7); 
   }
-
 
   @Test
   public void testGenerateDataFile() throws Exception {
 
-    File planFile = new File("./src/test/resources/plans.json");
-    File currentStateFile = new File("./src/test/resources/currentStates.json");
-    File goalFile = new File("./src/test/resources/goals.json");
+    File planFile = new File("./src/test/resources/plans2.json");
+    File currentStateFile = new File("./src/test/resources/currentStates2.json");
+    File goalFile = new File("./src/test/resources/goals2.json");
 
     Gson gson = new Gson();
 
@@ -34,7 +35,7 @@ public class GenerateDataFromIdeaTest {
     Idea[] goalIdeas = gson.fromJson(new FileReader(goalFile), Idea[].class);
     Idea[] currentStateIdeas = gson.fromJson(new FileReader(currentStateFile), Idea[].class);
 
-    List<DataSample> dataSamples = new ArrayList<>();
+    List<DataSample<Double>> dataSamples = new ArrayList<>();
 
     for (int i = 0; i < planIdeas.length; i++) {
 
@@ -42,19 +43,29 @@ public class GenerateDataFromIdeaTest {
       resetIdeaIds(goalIdeas[i], -1);
       resetIdeaIds(currentStateIdeas[i], -1);
 
-      MatrixIdea planMatrixIdea = matrixIdeaSerializer.serialize(planIdeas[i]);
-      MatrixIdea goalMatrixIdea = matrixIdeaSerializer.serialize(goalIdeas[i]);
-      MatrixIdea currentStateMatrixIdea = matrixIdeaSerializer.serialize(currentStateIdeas[i]);
+      MatrixIdea planMatrixIdea = matrixIdeaSerializer.serialize(planIdeas[i], 0d, 1d, false);
+      MatrixIdea goalMatrixIdea = matrixIdeaSerializer.serialize(goalIdeas[i], 0d, 1d, false);
+      MatrixIdea currentStateMatrixIdea = matrixIdeaSerializer.serialize(currentStateIdeas[i], 0d, 1d, false);
 
-      double[][][] x = new double[2][][];
+      Double[][][] x = new Double[2][][];
 
-      x[0] = currentStateMatrixIdea.getMatrix();
-      x[1] = goalMatrixIdea.getMatrix();
+      x[0] = (Double[][]) currentStateMatrixIdea.getMatrix();
+      x[1] = (Double[][]) goalMatrixIdea.getMatrix();
 
       dataSamples.add(new DataSample(x, planMatrixIdea.getMatrix()));
     }
 
-    gson.toJson(dataSamples, new FileWriter("./src/test/resources/dataTraining.json"));
+    int mountByFile = 300;
+
+    for (int i = 0; i <dataSamples.size()/mountByFile; i++) {
+      String json = gson.toJson(dataSamples.subList(i*mountByFile, (i+1) * mountByFile));
+
+      FileWriter fileWriter = new FileWriter("./src/test/resources/dataTraining_" + (6+i) + ".json");
+      BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+
+      bufferedWriter.write(json);
+      bufferedWriter.close();
+    }
 
   }
 

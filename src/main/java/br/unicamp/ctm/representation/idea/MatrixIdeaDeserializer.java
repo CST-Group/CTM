@@ -82,7 +82,7 @@ public class MatrixIdeaDeserializer<T> {
   }
 
   private void setValue(Idea idea, T[][] matrix, Map<String, Integer> dictionary, int i) {
-    Optional<Entry<Class, Integer>> entryOptional = MatrixIdeaMetadataValues.getMetadataMap()
+    Optional<Entry<Class, Integer>> entryOptional = IdeaMetadataValues.getMetadataMap()
         .entrySet().stream().filter(entry -> entry.getValue() == matrix[i][matrix.length + 2])
         .findFirst();
 

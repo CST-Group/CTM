@@ -120,4 +120,45 @@ public class ValueConverter<T> {
     return list;
   }
 
+  public List<Double> convertNumberToBaseTen(double value) {
+
+    List<Double> numberBaseTen = new ArrayList<>();
+
+    value = Math.abs(value);
+
+    int base = 0;
+    double valueDivided = value;
+
+    while(true) {
+
+      if(value == 0 || value == 1) {
+        numberBaseTen.add(value);
+        numberBaseTen.add(0d);
+
+        return numberBaseTen;
+      }
+      if(value > 1) {
+        if(valueDivided >= 1) {
+          valueDivided/=10;
+          base++;
+        } else {
+          numberBaseTen.add(valueDivided*10);
+          numberBaseTen.add((double) (base-1));
+
+          return numberBaseTen;
+        }
+      } else if(value < 1) {
+        if(valueDivided <= 1) {
+          valueDivided*=10;
+          base--;
+        } else {
+          numberBaseTen.add(valueDivided/10);
+          numberBaseTen.add((double) (base+1));
+
+          return numberBaseTen;
+        }
+      }
+    }
+  }
+
 }

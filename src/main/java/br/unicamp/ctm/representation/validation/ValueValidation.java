@@ -18,7 +18,13 @@ public class ValueValidation {
         || clazz.getCanonicalName().equals(long[].class.getCanonicalName())
         || clazz.getCanonicalName().equals(float[].class.getCanonicalName())
         || clazz.getCanonicalName().equals(short[].class.getCanonicalName())
-        || clazz.getCanonicalName().equals(boolean[].class.getCanonicalName());
+        || clazz.getCanonicalName().equals(boolean[].class.getCanonicalName())
+        || clazz.getCanonicalName().equals(Integer[].class.getCanonicalName())
+        || clazz.getCanonicalName().equals(Double[].class.getCanonicalName())
+        || clazz.getCanonicalName().equals(Long[].class.getCanonicalName())
+        || clazz.getCanonicalName().equals(Float[].class.getCanonicalName())
+        || clazz.getCanonicalName().equals(Short[].class.getCanonicalName())
+        || clazz.getCanonicalName().equals(Boolean[].class.getCanonicalName());
   }
 
   public static boolean isPrimitive(Object object) {
@@ -66,6 +72,22 @@ public class ValueValidation {
 
   public static boolean isString(Class clazz) {
     return clazz.getCanonicalName().equals(String.class.getCanonicalName());
+  }
+
+  public boolean compareValue(int[] newValue, int[] value) {
+
+    if(newValue.length == value.length) {
+
+      for (int i = 0; i < newValue.length; i++) {
+        if(newValue[i] != value[i]) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    return false;
   }
 
 }

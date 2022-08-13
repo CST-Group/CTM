@@ -6,7 +6,6 @@ import br.unicamp.ctm.representation.model.MatrixIdea;
 import br.unicamp.ctm.representation.validation.ValueValidation;
 import java.lang.reflect.Array;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class MatrixIdeaSerializer<T> {
@@ -19,7 +18,7 @@ public class MatrixIdeaSerializer<T> {
   private T defaultValue;
   private T activeValue;
 
-  public MatrixIdeaSerializer(Class<T> clazz, int rows, int columns, int size) {
+    public MatrixIdeaSerializer(Class<T> clazz, int rows, int columns, int size) {
     this.size = size;
     this.rows = rows;
     this.columns = columns;
@@ -109,7 +108,7 @@ public class MatrixIdeaSerializer<T> {
 
   private void setMetadataValue(Idea idea, T[][] matrix, T defaultValue, int i) {
     if (idea.getValue() != null) {
-      Integer metadataValue = MatrixIdeaMetadataValues.getMetadataMap()
+      Integer metadataValue = IdeaMetadataValues.getMetadataMap()
           .get(idea.getValue().getClass());
       setValue(matrix, i, columns + 2,
           castToGeneric(metadataValue != null ? metadataValue : defaultValue), false);

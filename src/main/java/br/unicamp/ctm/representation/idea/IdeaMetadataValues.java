@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import scala.Char;
 
-public class MatrixIdeaMetadataValues {
+public class IdeaMetadataValues {
 
   public static Map<Class, Integer> getMetadataMap() {
 

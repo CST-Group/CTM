@@ -62,11 +62,11 @@ public class SDRIdeaSerializer {
       SDRIdea sdrIdea = new SDRIdeaBuilder().build(channels, rows, columns, getDefaultValue(),
           getActiveValue());
 
-      setIdValue(idea, sdrIdea, sdrIdea.getSdr(), 0);
+      setIdValue(idea, sdrIdea.getSdr(), 0);
       setNameValue(idea, sdrIdea, sdrIdea.getSdr(), 0);
       setTypeValue(idea, sdrIdea, sdrIdea.getSdr(), 0);
-      setMetadataValue(idea, sdrIdea, sdrIdea.getSdr(), 0);
-      valueAnalyse(idea, sdrIdea, sdrIdea.getSdr(), 0);
+      setMetadataValue(idea, sdrIdea.getSdr(), 0);
+      valueAnalyse(idea, sdrIdea.getSdr(), 0);
 
       generateSDR(sdrIdea, idea);
 
@@ -77,26 +77,26 @@ public class SDRIdeaSerializer {
     }
   }
 
-  private void setParentValue(Idea idea, SDRIdea sdrIdea, int[][][] sdr, int channel) {
-    setNumericValue(sdrIdea, sdr, channel, 0, columns, (int)idea.getId());
+  private void setParentValue(Idea idea, int[][][] sdr, int channel) {
+    setNumericValue(sdr, channel, 0, columns, (int)idea.getId());
   }
 
-  private void setIdValue(Idea idea, SDRIdea sdrIdea, int[][][] sdr, int channel) {
-      setNumericValue(sdrIdea, sdr, channel, 2, columns, (int)idea.getId());
+  private void setIdValue(Idea idea, int[][][] sdr, int channel) {
+      setNumericValue(sdr, channel, 2, columns, (int)idea.getId());
   }
 
-  private void valueAnalyse(Idea idea, SDRIdea sdrIdea, int[][][] sdr, int channel) {
+  private void valueAnalyse(Idea idea, int[][][] sdr, int channel) {
     if (ValueValidation.isArray(idea.getValue())) {
       List values = valueConverter.convertToList(idea.getValue());
       for (int i = 0; i < values.size(); i++) {
-        setNumericValue(sdrIdea, sdr, channel, 11+i*2, columns, (Number)values.get(i));
+        setNumericValue(sdr, channel, 11+i*2, columns, (Number)values.get(i));
       }
     } else {
       if (ValueValidation.isPrimitive(idea.getValue())) {
         if(idea.getValue().getClass().equals(Boolean.class)) {
           setValue(sdr, channel, 11, getArrayFromDictionary((String) idea.getValue()));
         } else {
-          setNumericValue(sdrIdea, sdr, channel, 11, columns, (Number)idea.getValue());
+          setNumericValue(sdr, channel, 11, columns, (Number)idea.getValue());
         }
       } else if (ValueValidation.isString(idea.getValue())) {
         if (idea.getValue() != null) {
@@ -110,24 +110,24 @@ public class SDRIdeaSerializer {
 
     for (Idea childIdea : idea.getL()) {
 
-      setParentValue(idea, sdrIdea, sdrIdea.getSdr(), channelCounter);
-      setIdValue(childIdea, sdrIdea, sdrIdea.getSdr(), channelCounter);
+      setParentValue(idea, sdrIdea.getSdr(), channelCounter);
+      setIdValue(childIdea, sdrIdea.getSdr(), channelCounter);
       setNameValue(childIdea, sdrIdea, sdrIdea.getSdr(), channelCounter);
       setTypeValue(childIdea, sdrIdea, sdrIdea.getSdr(), channelCounter);
-      setMetadataValue(childIdea, sdrIdea, sdrIdea.getSdr(), channelCounter);
-      valueAnalyse(childIdea, sdrIdea, sdrIdea.getSdr(), channelCounter);
+      setMetadataValue(childIdea, sdrIdea.getSdr(), channelCounter);
+      valueAnalyse(childIdea, sdrIdea.getSdr(), channelCounter);
 
       channelCounter++;
       generateSDR(sdrIdea, childIdea);
     }
   }
 
-  private void setMetadataValue(Idea idea, SDRIdea sdrIdea, int[][][] sdr, int channel) {
+  private void setMetadataValue(Idea idea, int[][][] sdr, int channel) {
     if (idea.getValue() != null) {
       Integer metadataValue = IdeaMetadataValues.getMetadataMap()
           .get(idea.getValue().getClass());
 
-      setNumericValue(sdrIdea, sdr, channel, 7, columns, metadataValue);
+      setNumericValue(sdr, channel, 7, columns, metadataValue);
 
       int length = 0;
 
@@ -136,7 +136,7 @@ public class SDRIdeaSerializer {
         length = values.size();
       }
 
-      setNumericValue(sdrIdea, sdr, channel, 9, columns, length);
+      setNumericValue(sdr, channel, 9, columns, length);
     }
   }
 
@@ -147,14 +147,14 @@ public class SDRIdeaSerializer {
   }
 
   private void setTypeValue(Idea idea, SDRIdea sdrIdea, int[][][] sdr, int channel) {
-    setNumericValue(sdrIdea, sdr, channel, 5, columns, (int)idea.getType());
+    setNumericValue(sdr, channel, 5, columns, (int)idea.getType());
   }
 
   private void setValue(int[][][] sdr, int channel, int row, int[] value) {
     sdr[channel][row] = value;
   }
 
-  private void setNumericValue(SDRIdea sdrIdea, int[][][] sdr, int channel, int row, int length, Number value) {
+  private void setNumericValue(int[][][] sdr, int channel, int row, int length, Number value) {
     int range = length/4;
 
     List<Double> baseTenValue = valueConverter.convertNumberToBaseTen(value.doubleValue());

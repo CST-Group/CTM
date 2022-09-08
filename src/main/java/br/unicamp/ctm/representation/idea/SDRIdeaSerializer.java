@@ -3,6 +3,7 @@ package br.unicamp.ctm.representation.idea;
 import br.unicamp.ctm.representation.converter.ValueConverter;
 import br.unicamp.ctm.representation.model.SDRIdea;
 import br.unicamp.ctm.representation.validation.ValueValidation;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +71,8 @@ public class SDRIdeaSerializer {
 
       generateSDR(sdrIdea, idea);
 
+      channelCounter=1;
+
       return sdrIdea;
 
     }  else {
@@ -94,7 +97,7 @@ public class SDRIdeaSerializer {
     } else {
       if (ValueValidation.isPrimitive(idea.getValue())) {
         if(idea.getValue().getClass().equals(Boolean.class)) {
-          setValue(sdr, channel, 11, getArrayFromDictionary((String) idea.getValue()));
+          setValue(sdr, channel, 11, getArrayFromDictionary(String.valueOf(idea.getValue())));
         } else {
           setNumericValue(sdr, channel, 11, columns, (Number)idea.getValue());
         }
@@ -124,8 +127,17 @@ public class SDRIdeaSerializer {
 
   private void setMetadataValue(Idea idea, int[][][] sdr, int channel) {
     if (idea.getValue() != null) {
-      Integer metadataValue = IdeaMetadataValues.getMetadataMap()
-          .get(idea.getValue().getClass());
+
+      Integer metadataValue = 0;
+      if(idea.getValue().getClass().equals(ArrayList.class)) {
+        Class listClassAsArray = getListClassAsArray(
+            ((ArrayList) idea.getValue()).get(0).getClass());
+        metadataValue = IdeaMetadataValues.getMetadataMap()
+            .get(listClassAsArray);
+      } else {
+        metadataValue = IdeaMetadataValues.getMetadataMap()
+            .get(idea.getValue().getClass());
+      }
 
       setNumericValue(sdr, channel, 7, columns, metadataValue);
 
@@ -173,7 +185,7 @@ public class SDRIdeaSerializer {
     }
 
     int base = baseTenValue.get(1).intValue();
-    int[] baseSDR = getArrayFromValues(base, range);
+    int[] baseSDR = getArrayFromValues(Math.abs(base), range);
 
     for (int i = 0; i < baseSDR.length; i++) {
       sdr[channel][row+1][i] = baseSDR[i];
@@ -183,6 +195,12 @@ public class SDRIdeaSerializer {
       sdr[channel][row+1][baseSDR.length] = 1;
     } else {
       sdr[channel][row+1][baseSDR.length] = 0;
+    }
+
+    if(base < 0) {
+      sdr[channel][row+1][baseSDR.length+1] = 1;
+    } else {
+      sdr[channel][row+1][baseSDR.length+1] = 0;
     }
 
   }
@@ -280,6 +298,24 @@ public class SDRIdeaSerializer {
     }
 
     return false;
+  }
+
+  private Class getListClassAsArray(Class clazz) {
+    if (clazz.equals(Double.class)) {
+      return Double[].class;
+    } else if (clazz.equals(Integer.class)) {
+      return Integer[].class;
+    } else if (clazz.equals(Short.class)) {
+      return Short[].class;
+    } else if (clazz.equals(Long.class)) {
+      return Long[].class;
+    } else if (clazz.equals(Byte.class)) {
+      return Byte[].class;
+    } else if (clazz.equals(Boolean.class)) {
+      return Boolean[].class;
+    } else {
+      return String[].class;
+    }
   }
 
 

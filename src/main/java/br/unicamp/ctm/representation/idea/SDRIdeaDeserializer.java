@@ -188,9 +188,10 @@ public class SDRIdeaDeserializer {
       base = baseOptional.get().getKey();
     }
 
-    int signal = sdrChannel[row+1][range] * -1 == 0? 1:-1;
+    int valueSignal = sdrChannel[row+1][range] * -1 == 0? 1:-1;
+    int baseSignal = sdrChannel[row+1][range+1] * -1 == 0? 1:-1;
 
-    Number number = Double.parseDouble(valueString) * Math.pow(10, base) * signal;
+    Number number = Double.parseDouble(valueString) * Math.pow(10, base*baseSignal) * valueSignal;
 
     if(clazz == Integer.class)
       return number.intValue();

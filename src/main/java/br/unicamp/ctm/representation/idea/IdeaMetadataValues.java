@@ -15,7 +15,7 @@ public class IdeaMetadataValues {
     metadataMap.put(float.class, 2);
     metadataMap.put(Float.class, 2);
     metadataMap.put(double.class, 3);
-    metadataMap.put(Double.class, 2);
+    metadataMap.put(Double.class, 3);
     metadataMap.put(char.class, 4);
     metadataMap.put(Char.class, 4);
     metadataMap.put(short.class, 5);

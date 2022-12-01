@@ -26,6 +26,8 @@ public class GenerateDataFromIdeaSDRTest {
   private Map<Integer, int[]> values;
   private SDRIdeaSerializer sdrIdeaSerializer;
 
+  private SDRIdeaDeserializer sdrIdeaDeserializer;
+
   @Before
   public void setup() throws FileNotFoundException {
     Gson gson = new Gson();
@@ -46,9 +48,11 @@ public class GenerateDataFromIdeaSDRTest {
     if(valuesFile.exists())
       values = gson.fromJson(new FileReader(valuesFile), type);
 
-    sdrIdeaSerializer = new SDRIdeaSerializer(20,32,32);
+    sdrIdeaSerializer = new SDRIdeaSerializer(16,32,32);
     sdrIdeaSerializer.setDictionary(dictionary);
     sdrIdeaSerializer.setValues(values);
+
+    sdrIdeaDeserializer = new SDRIdeaDeserializer(dictionary, values);
   }
 
   @Test
@@ -57,14 +61,14 @@ public class GenerateDataFromIdeaSDRTest {
 
     Gson gson = new Gson();
 
-    for (int k = 1; k <= 2; k++) {
+    for (int k = 1; k <= 5; k++) {
 
       File planFile = new File("./src/test/resources/plansShort" + k + ".json");
       File currentStateFile = new File("./src/test/resources/currentStatesShort" + k + ".json");
-      File goalFile = new File("./src/test/resources/goalsShort" + k + ".json");
+//      File goalFile = new File("./src/test/resources/goalsShort" + k + ".json");
 
       Idea[] planIdeas = gson.fromJson(new FileReader(planFile), Idea[].class);
-      Idea[] goalIdeas = gson.fromJson(new FileReader(goalFile), Idea[].class);
+//      Idea[] goalIdeas = gson.fromJson(new FileReader(goalFile), Idea[].class);
       Idea[] currentStateIdeas = gson.fromJson(new FileReader(currentStateFile), Idea[].class);
 
       List<SDRDataSample> dataSamples = new ArrayList<>();
@@ -72,17 +76,17 @@ public class GenerateDataFromIdeaSDRTest {
       for (int i = 0; i < planIdeas.length; i++) {
 
         resetIdeaIds(planIdeas[i], -1);
-        resetIdeaIds(goalIdeas[i], -1);
+//        resetIdeaIds(goalIdeas[i], -1);
         resetIdeaIds(currentStateIdeas[i], -1);
 
         SDRIdea planSDRIdea = sdrIdeaSerializer.serialize(planIdeas[i]);
-        SDRIdea goalSDRIdea = sdrIdeaSerializer.serialize(goalIdeas[i]);
+//        SDRIdea goalSDRIdea = sdrIdeaSerializer.serialize(goalIdeas[i]);
         SDRIdea currentStateSDRIdea = sdrIdeaSerializer.serialize(currentStateIdeas[i]);
 
-        int[][][][] x = new int[2][][][];
+        int[][][][] x = new int[1][][][];
 
         x[0] = currentStateSDRIdea.getSdr();
-        x[1] = goalSDRIdea.getSdr();
+//        x[1] = goalSDRIdea.getSdr();
 
         dataSamples.add(new SDRDataSample(x, planSDRIdea.getSdr()));
 

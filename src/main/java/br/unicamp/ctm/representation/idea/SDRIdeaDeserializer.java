@@ -1,6 +1,5 @@
 package br.unicamp.ctm.representation.idea;
 
-import br.unicamp.ctm.representation.converter.ValueConverter;
 import br.unicamp.ctm.representation.model.SDRIdea;
 import br.unicamp.ctm.representation.validation.ValueValidation;
 import java.util.ArrayList;
@@ -23,8 +22,7 @@ public class SDRIdeaDeserializer {
     this.setValues(values);
   }
 
-  public Idea deserialize(SDRIdea sdrIdea)
-      throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+  public Idea deserialize(SDRIdea sdrIdea) {
 
     List<Idea> ideaList = new ArrayList<>();
 
@@ -42,6 +40,9 @@ public class SDRIdeaDeserializer {
     for (int i = 0; i < sdr.length; i++) {
 
       int[][] sdrChannel = sdr[i];
+
+      if(isNullableSDR(sdrChannel))
+        continue;
 
       Integer parentId = null;
       if (i != 0)
@@ -177,6 +178,9 @@ public class SDRIdeaDeserializer {
         valueString+=".";
     }
 
+    if(valueString.length() == 1 || valueString.isEmpty())
+      return 0;
+
     int[] baseSDR = buildSDR(range, sdrChannel[row+1], 0);
 
     Optional<Entry<Integer, int[]>> baseOptional = getValues().entrySet().stream()
@@ -231,5 +235,16 @@ public class SDRIdeaDeserializer {
 
   public void setValues(Map<Integer, int[]> values) {
     this.values = values;
+  }
+
+  public boolean isNullableSDR(int[][] sdr) {
+    int sumCheck = 0;
+    for (int i = 0; i < sdr.length; i++) {
+      for (int j = 0; j < sdr[i].length; j++) {
+        sumCheck+=sdr[i][j];
+      }
+    }
+
+    return  sumCheck == 0;
   }
 }

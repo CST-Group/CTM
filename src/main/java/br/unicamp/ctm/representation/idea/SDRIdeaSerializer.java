@@ -44,7 +44,8 @@ public class SDRIdeaSerializer {
     this.setValues(new HashMap<>());
   }
 
-  public SDRIdeaSerializer(int channels, int rows, int columns, int defaultValue, int activeValue, Map<String, int[]> dictionary, Map<Integer, int[]> values) {
+  public SDRIdeaSerializer(int channels, int rows, int columns, int defaultValue, int activeValue,
+      Map<String, int[]> dictionary, Map<Integer, int[]> values) {
     this.rows = rows;
     this.columns = columns;
     this.channels = channels;
@@ -56,50 +57,50 @@ public class SDRIdeaSerializer {
   }
 
 
-
   public SDRIdea serialize(Idea idea) throws Exception {
 
-    if(idea != null) {
+    if (idea != null) {
       SDRIdea sdrIdea = new SDRIdeaBuilder().build(channels, rows, columns, getDefaultValue(),
           getActiveValue());
 
       setIdValue(idea, sdrIdea.getSdr(), 0);
-      setNameValue(idea, sdrIdea, sdrIdea.getSdr(), 0);
-      setTypeValue(idea, sdrIdea, sdrIdea.getSdr(), 0);
+      setNameValue(idea, sdrIdea.getSdr(), 0);
+      setTypeValue(idea, sdrIdea.getSdr(), 0);
       setMetadataValue(idea, sdrIdea.getSdr(), 0);
       valueAnalyse(idea, sdrIdea.getSdr(), 0);
 
       generateSDR(sdrIdea, idea);
 
-      channelCounter=1;
+      channelCounter = 1;
 
       return sdrIdea;
 
-    }  else {
+    } else {
       throw new Exception("Idea Graph is null.");
     }
   }
 
   private void setParentValue(Idea idea, int[][][] sdr, int channel) {
-    setNumericValue(sdr, channel, 0, columns, (int)idea.getId());
+    setNumericValue(sdr, channel, 0, columns, (int) idea.getId());
   }
 
   private void setIdValue(Idea idea, int[][][] sdr, int channel) {
-      setNumericValue(sdr, channel, 2, columns, (int)idea.getId());
+    setNumericValue(sdr, channel, 2, columns, (int) idea.getId());
   }
 
   private void valueAnalyse(Idea idea, int[][][] sdr, int channel) {
     if (ValueValidation.isArray(idea.getValue())) {
-      List values = valueConverter.convertToList(idea.getValue());
+      List values = idea.getValue() instanceof List ? (List) idea.getValue()
+          : valueConverter.convertToList(idea.getValue());
       for (int i = 0; i < values.size(); i++) {
-        setNumericValue(sdr, channel, 11+i*2, columns, (Number)values.get(i));
+        setNumericValue(sdr, channel, 11 + i * 2, columns, (Number) values.get(i));
       }
     } else {
       if (ValueValidation.isPrimitive(idea.getValue())) {
-        if(idea.getValue().getClass().equals(Boolean.class)) {
+        if (idea.getValue().getClass().equals(Boolean.class)) {
           setValue(sdr, channel, 11, getArrayFromDictionary(String.valueOf(idea.getValue())));
         } else {
-          setNumericValue(sdr, channel, 11, columns, (Number)idea.getValue());
+          setNumericValue(sdr, channel, 11, columns, (Number) idea.getValue());
         }
       } else if (ValueValidation.isString(idea.getValue())) {
         if (idea.getValue() != null) {
@@ -115,8 +116,8 @@ public class SDRIdeaSerializer {
 
       setParentValue(idea, sdrIdea.getSdr(), channelCounter);
       setIdValue(childIdea, sdrIdea.getSdr(), channelCounter);
-      setNameValue(childIdea, sdrIdea, sdrIdea.getSdr(), channelCounter);
-      setTypeValue(childIdea, sdrIdea, sdrIdea.getSdr(), channelCounter);
+      setNameValue(childIdea, sdrIdea.getSdr(), channelCounter);
+      setTypeValue(childIdea, sdrIdea.getSdr(), channelCounter);
       setMetadataValue(childIdea, sdrIdea.getSdr(), channelCounter);
       valueAnalyse(childIdea, sdrIdea.getSdr(), channelCounter);
 
@@ -129,9 +130,9 @@ public class SDRIdeaSerializer {
     if (idea.getValue() != null) {
 
       Integer metadataValue = 0;
-      if(idea.getValue().getClass().equals(ArrayList.class)) {
+      if (idea.getValue() instanceof List) {
         Class listClassAsArray = getListClassAsArray(
-            ((ArrayList) idea.getValue()).get(0).getClass());
+            ((List) idea.getValue()).get(0).getClass());
         metadataValue = IdeaMetadataValues.getMetadataMap()
             .get(listClassAsArray);
       } else {
@@ -144,7 +145,8 @@ public class SDRIdeaSerializer {
       int length = 0;
 
       if (ValueValidation.isArray(idea.getValue())) {
-        List values = valueConverter.convertToList(idea.getValue());
+        List values = idea.getValue() instanceof List ? (List) idea.getValue()
+            : valueConverter.convertToList(idea.getValue());
         length = values.size();
       }
 
@@ -152,14 +154,14 @@ public class SDRIdeaSerializer {
     }
   }
 
-  private void setNameValue(Idea idea, SDRIdea sdrIdea, int[][][] sdr, int channel) {
+  private void setNameValue(Idea idea, int[][][] sdr, int channel) {
     if (idea.getName() != null && getArrayFromDictionary(idea.getName()) != null) {
       setValue(sdr, channel, 4, getArrayFromDictionary(idea.getName()));
     }
   }
 
-  private void setTypeValue(Idea idea, SDRIdea sdrIdea, int[][][] sdr, int channel) {
-    setNumericValue(sdr, channel, 5, columns, (int)idea.getType());
+  private void setTypeValue(Idea idea, int[][][] sdr, int channel) {
+    setNumericValue(sdr, channel, 5, columns, (int) idea.getType());
   }
 
   private void setValue(int[][][] sdr, int channel, int row, int[] value) {
@@ -167,9 +169,10 @@ public class SDRIdeaSerializer {
   }
 
   private void setNumericValue(int[][][] sdr, int channel, int row, int length, Number value) {
-    int range = length/4;
+    int range = length / 4;
 
-    List<Double> baseTenValue = valueConverter.convertNumberToBaseTen(value.doubleValue());
+    List<Double> baseTenValue = valueConverter.convertNumberToBaseTen(
+        Math.abs(value.doubleValue()));
 
     String valueString = String.valueOf(baseTenValue.get(0));
     valueString = valueString.replace(".", "");
@@ -180,7 +183,7 @@ public class SDRIdeaSerializer {
       int[] valueSDR = getArrayFromValues(valueInt, range);
 
       for (int j = 0; j < valueSDR.length; j++) {
-        sdr[channel][row][i*range+j] = valueSDR[j];
+        sdr[channel][row][i * range + j] = valueSDR[j];
       }
     }
 
@@ -188,19 +191,19 @@ public class SDRIdeaSerializer {
     int[] baseSDR = getArrayFromValues(Math.abs(base), range);
 
     for (int i = 0; i < baseSDR.length; i++) {
-      sdr[channel][row+1][i] = baseSDR[i];
+      sdr[channel][row + 1][i] = baseSDR[i];
     }
 
-    if(value.doubleValue() < 0) {
-      sdr[channel][row+1][baseSDR.length] = 1;
+    if (value.doubleValue() < 0) {
+      sdr[channel][row + 1][baseSDR.length] = 1;
     } else {
-      sdr[channel][row+1][baseSDR.length] = 0;
+      sdr[channel][row + 1][baseSDR.length] = 0;
     }
 
-    if(base < 0) {
-      sdr[channel][row+1][baseSDR.length+1] = 1;
+    if (base < 0) {
+      sdr[channel][row + 1][baseSDR.length + 1] = 1;
     } else {
-      sdr[channel][row+1][baseSDR.length+1] = 0;
+      sdr[channel][row + 1][baseSDR.length + 1] = 0;
     }
 
   }
@@ -216,7 +219,6 @@ public class SDRIdeaSerializer {
   }
 
 
-
   public int[] getArrayFromValues(Integer value, Integer length) {
     if (getValues().containsKey(value)) {
       return getValues().get(value);
@@ -227,14 +229,15 @@ public class SDRIdeaSerializer {
     }
   }
 
-  private int[] generateContent(int length, boolean isValue, Map<String, int[]> dictionary, Map<Integer, int[]> values) {
+  private int[] generateContent(int length, boolean isValue, Map<String, int[]> dictionary,
+      Map<Integer, int[]> values) {
 
     boolean retry = true;
 
-    while(retry) {
+    while (retry) {
       int[] value = generateValue(length);
 
-      retry = isValue? values.entrySet().stream()
+      retry = isValue ? values.entrySet().stream()
           .filter(entry -> entry.getValue().length == length)
           .filter(entry -> compareValue(entry.getValue(), value))
           .collect(Collectors.toList()).size() > 0 :
@@ -244,7 +247,7 @@ public class SDRIdeaSerializer {
               .filter(entry -> compareValue(entry.getValue(), value))
               .collect(Collectors.toList()).size() > 0;
 
-      if(!retry) {
+      if (!retry) {
         return value;
       }
     }
@@ -255,18 +258,17 @@ public class SDRIdeaSerializer {
 
   private int[] generateValue(int length) {
 
-    int w = length/2;
+    int w = length / 2;
     Random random = new Random();
 
     int[] value = new int[length];
-
 
     for (int i = 0; i < w; i++) {
       boolean retry = true;
 
       while (retry) {
         int index = random.nextInt(length);
-        if(value[index] != 1) {
+        if (value[index] != 1) {
           value[index] = getActiveValue();
           retry = false;
         }
@@ -286,10 +288,10 @@ public class SDRIdeaSerializer {
 
   private boolean compareValue(int[] newValue, int[] value) {
 
-    if(newValue.length == value.length) {
+    if (newValue.length == value.length) {
 
       for (int i = 0; i < newValue.length; i++) {
-        if(newValue[i] != value[i]) {
+        if (newValue[i] != value[i]) {
           return false;
         }
       }

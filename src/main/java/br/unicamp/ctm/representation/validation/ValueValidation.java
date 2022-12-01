@@ -1,5 +1,7 @@
 package br.unicamp.ctm.representation.validation;
 
+import java.util.List;
+
 public class ValueValidation {
 
 
@@ -9,7 +11,8 @@ public class ValueValidation {
         || object instanceof long[]
         || object instanceof float[]
         || object instanceof short[]
-        || object instanceof boolean[];
+        || object instanceof boolean[]
+        || object instanceof List;
   }
 
   public static boolean isArray(Class clazz) {

@@ -28,7 +28,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  *
- * @author rgudwin
+ * @author efroes
  */
 public class Idea {
     private long id;
@@ -121,7 +121,6 @@ public class Idea {
 
     public Idea add(Idea node) {
         l.add(node);
-        sort();
         return(node);
     }
     

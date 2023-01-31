@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -63,8 +65,8 @@ public class GenerateDataFromIdeaSDRTest {
 
     for (int k = 1; k <= 5; k++) {
 
-      File planFile = new File("./src/test/resources/plansShort" + k + ".json");
-      File currentStateFile = new File("./src/test/resources/currentStatesShort" + k + ".json");
+      File planFile = new File("./src/test/resources/plansShort"+k+".json");
+      File currentStateFile = new File("./src/test/resources/currentStatesShort"+k+".json");
 //      File goalFile = new File("./src/test/resources/goalsShort" + k + ".json");
 
       Idea[] planIdeas = gson.fromJson(new FileReader(planFile), Idea[].class);
@@ -140,6 +142,31 @@ public class GenerateDataFromIdeaSDRTest {
     }
 
     return value;
+  }
+
+  @Test
+  public void test() {
+
+    double value = -7d;
+
+//    String stringValue = Long.toBinaryString(Double.doubleToRawLongBits(value));
+    String stringValue = "1100000000110010000000000000000000000000000000000000000000000000";
+
+    int fillCount = 32 * 2 - stringValue.length();
+
+    if (fillCount > 0) {
+      if (value < 0d) {
+        fillCount--;
+        stringValue = "1" + StringUtils.repeat("0", fillCount) + stringValue;
+      } else {
+        stringValue = StringUtils.repeat("0", fillCount) + stringValue;
+      }
+    }
+
+    double d = Double.longBitsToDouble(Long.parseUnsignedLong(stringValue, 2));
+
+
+    System.out.println(d);
   }
 
 }

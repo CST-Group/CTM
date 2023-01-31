@@ -41,16 +41,16 @@ public class PlanGeneratedTest {
   public void planGeneratedTest()
       throws FileNotFoundException {
 
-    File planGeneratedFile  = new File("./src/test/resources/pix2pix_plan_generated_dic_9.json");
+    File planGeneratedFile  = new File("./src/test/resources/pix2pix_plan_generated_dic_local.json");
     PlanGeneratedSample planGeneratedSample = gson.fromJson(new FileReader(planGeneratedFile), PlanGeneratedSample.class);
 
     SDRIdea generatedPlanSDRIdea = new SDRIdea(16, 32, 32);
-    generatedPlanSDRIdea.setSdr(planGeneratedSample.getFakePlan());
+    generatedPlanSDRIdea.setSdr(planGeneratedSample.getRealPlan());
 
-    SDRIdea originalPlanSDRIdea = new SDRIdea(16, 32, 32);
-    originalPlanSDRIdea.setSdr(planGeneratedSample.getRealPlan());
+//    SDRIdea originalPlanSDRIdea = new SDRIdea(16, 32, 32);
+//    originalPlanSDRIdea.setSdr(planGeneratedSample.getRealPlan());
 
-    Idea originalPlanIdea = sdrIdeaDeserializer.deserialize(originalPlanSDRIdea);
+//    Idea originalPlanIdea = sdrIdeaDeserializer.deserialize(originalPlanSDRIdea);
     Idea generatedPlanIdea = sdrIdeaDeserializer.deserialize(generatedPlanSDRIdea);
 
     System.out.print("exit");

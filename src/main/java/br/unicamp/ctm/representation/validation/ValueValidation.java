@@ -27,7 +27,8 @@ public class ValueValidation {
         || clazz.getCanonicalName().equals(Long[].class.getCanonicalName())
         || clazz.getCanonicalName().equals(Float[].class.getCanonicalName())
         || clazz.getCanonicalName().equals(Short[].class.getCanonicalName())
-        || clazz.getCanonicalName().equals(Boolean[].class.getCanonicalName());
+        || clazz.getCanonicalName().equals(Boolean[].class.getCanonicalName())
+        || clazz.getCanonicalName().equals(String[].class.getCanonicalName());
   }
 
   public static boolean isPrimitive(Object object) {

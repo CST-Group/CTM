@@ -15,7 +15,7 @@ public class SDRIdeaSerializerTest {
   public void setup() {
 
     sdrIdeaSerializer = new SDRIdeaSerializer(10, 32, 32);
-    sdrIdeaDeserializer = new SDRIdeaDeserializer(sdrIdeaSerializer.getDictionary(), sdrIdeaSerializer.getValues());
+    sdrIdeaDeserializer = new SDRIdeaDeserializer(sdrIdeaSerializer.getDictionary());
   }
 
   private Idea initialize() {
@@ -28,7 +28,7 @@ public class SDRIdeaSerializerTest {
     idea.add(new Idea("Black Sabbath", Arrays.asList(3.4, 2.221, 0.23), 1))
         .add(new Idea("Paranoid", new short[]{34, 18, 10}));
     idea.add(new Idea("Gun's in Roses", "Sweet child o' mine", 2))
-        .add(new Idea("November Rain", new float[]{-18f, 1.2f, 2f, 5.2f, -1f, 0f, 1000f}));
+        .add(new Idea("November Rain", new float[]{-18f, 1.2f, -0.02f, 5.2f, -1f, 0f, 1000f}));
 
     return idea;
   }

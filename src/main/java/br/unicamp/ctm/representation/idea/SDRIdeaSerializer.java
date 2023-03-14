@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
+import br.unicamp.ctm.representation.model.Dictionary;
 
 public class SDRIdeaSerializer {
 
@@ -20,8 +21,8 @@ public class SDRIdeaSerializer {
   private int defaultValue;
   private int activeValue;
   private ValueConverter<Integer> valueConverter;
-  private Map<String, int[]> dictionary;
-  private Map<Integer, int[]> values;
+  private Dictionary dictionary;
+
   private int channelCounter = 1;
 
   public SDRIdeaSerializer(int channels, int rows, int columns, boolean toRaw) {
@@ -31,8 +32,7 @@ public class SDRIdeaSerializer {
     this.setDefaultValue(0);
     this.setActiveValue(1);
     this.valueConverter = new ValueConverter<>();
-    this.setDictionary(new HashMap<>());
-    this.setValues(new HashMap<>());
+    this.dictionary = new Dictionary(new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
     this.toRaw = toRaw;
   }
 
@@ -43,8 +43,7 @@ public class SDRIdeaSerializer {
     this.setDefaultValue(0);
     this.setActiveValue(1);
     this.valueConverter = new ValueConverter<>();
-    this.setDictionary(new HashMap<>());
-    this.setValues(new HashMap<>());
+    this.dictionary = new Dictionary(new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
     this.toRaw = false;
   }
 
@@ -55,21 +54,18 @@ public class SDRIdeaSerializer {
     this.setDefaultValue(defaultValue);
     this.setActiveValue(activeValue);
     this.valueConverter = new ValueConverter<>();
-    this.setDictionary(new HashMap<>());
-    this.setValues(new HashMap<>());
+    this.dictionary = new Dictionary(new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
     this.toRaw = false;
   }
 
-  public SDRIdeaSerializer(int channels, int rows, int columns, int defaultValue, int activeValue,
-      Map<String, int[]> dictionary, Map<Integer, int[]> values) {
+  public SDRIdeaSerializer(int channels, int rows, int columns, int defaultValue, int activeValue, Dictionary dictionary) {
     this.rows = rows;
     this.columns = columns;
     this.channels = channels;
     this.setDefaultValue(defaultValue);
     this.setActiveValue(activeValue);
     this.valueConverter = new ValueConverter<>();
-    this.setDictionary(dictionary);
-    this.setValues(values);
+    this.dictionary = dictionary;
     this.toRaw = false;
   }
 
@@ -113,18 +109,18 @@ public class SDRIdeaSerializer {
         if(ValueValidation.isPrimitive(values.get(i)))
           setValue(sdr, channel, 11 + i * 2, columns, (Number) values.get(i));
         else
-          setWord(sdr, channel, 11 + i, getArrayFromDictionary((String) values.get(i)));
+          setWord(sdr, channel, 11 + i, getArrayFromWords((String) values.get(i)));
       }
     } else {
       if (ValueValidation.isPrimitive(idea.getValue())) {
         if (idea.getValue().getClass().equals(Boolean.class)) {
-          setWord(sdr, channel, 11, getArrayFromDictionary(String.valueOf(idea.getValue())));
+          setWord(sdr, channel, 11, getArrayFromWords(String.valueOf(idea.getValue())));
         } else {
            setValue(sdr, channel, 11, columns, (Number) idea.getValue());
         }
       } else if (ValueValidation.isString(idea.getValue())) {
         if (idea.getValue() != null) {
-          setWord(sdr, channel, 11, getArrayFromDictionary((String) idea.getValue()));
+          setWord(sdr, channel, 11, getArrayFromWords((String) idea.getValue()));
         }
       }
     }
@@ -176,8 +172,8 @@ public class SDRIdeaSerializer {
   }
 
   private void setNameValue(Idea idea, int[][][] sdr, int channel) {
-    if (idea.getName() != null && getArrayFromDictionary(idea.getName()) != null) {
-      setWord(sdr, channel, 4, getArrayFromDictionary(idea.getName()));
+    if (idea.getName() != null && getArrayFromWords(idea.getName()) != null) {
+      setWord(sdr, channel, 4, getArrayFromWords(idea.getName()));
     }
   }
 
@@ -237,109 +233,144 @@ public class SDRIdeaSerializer {
   }
 
   private void setNumericValue(int[][][] sdr, int channel, int row, int length, Number value) {
-    int range = length / 4;
+    int range = length / 2;
 
     List<Double> baseTenValue = valueConverter.convertNumberToBaseTen(
         Math.abs(value.doubleValue()));
 
-    String valueString = String.format("%.3f", baseTenValue.get(0));
+    String valueString = String.format("%.2f", baseTenValue.get(0));
     valueString = valueString.replace(".", "");
     valueString = valueString.replace("-", "");
 
-    for (int i = 0; i < Math.min(valueString.length(), 4); i++) {
+    int offset = 0;
+    int interval = 0;
+
+    for (int i = 0; i < Math.min(valueString.length(), 3); i++) {
       int valueInt = Integer.parseInt(String.valueOf(valueString.charAt(i)));
       int[] valueSDR = getArrayFromValues(valueInt, range);
 
       for (int j = 0; j < valueSDR.length; j++) {
-        sdr[channel][row][i * range + j] = valueSDR[j];
+        sdr[channel][row+offset][interval * range + j] = valueSDR[j];
+      }
+
+      if((i + 1) * range >= length) {
+        offset++;
+        interval = 0;
+      } else {
+        interval++;
       }
     }
 
     int base = baseTenValue.get(1).intValue();
-    int[] baseSDR = getArrayFromValues(Math.abs(base), range);
 
+    int[] baseSDR = getArrayFromBaseValues(Math.abs(base), range/2);
     for (int i = 0; i < baseSDR.length; i++) {
-      sdr[channel][row + 1][i] = baseSDR[i];
+      sdr[channel][row + 1][range+i] = baseSDR[i];
     }
 
-    int[] signalSDR = getArrayFromValues(value.doubleValue() < 0? 1:0, range);
+    int[] signalSDR = getArrayFromSignalValues(value.doubleValue() < 0? 1:0, range/4);
     for (int i = 0; i < signalSDR.length; i++) {
-      sdr[channel][row + 1][signalSDR.length+i] = signalSDR[i];
+      sdr[channel][row + 1][range+baseSDR.length+i] = signalSDR[i];
     }
 
-    int[] baseSignalSDR = getArrayFromValues(base < 0? 1:0, range);
+    int[] baseSignalSDR = getArrayFromSignalValues(base < 0? 1:0, range/4);
     for (int i = 0; i < baseSignalSDR.length; i++) {
-      sdr[channel][row + 1][signalSDR.length*2+i] = baseSignalSDR[i];
+      sdr[channel][row + 1][range+baseSDR.length+signalSDR.length+i] = baseSignalSDR[i];
     }
-
-//    if (value.doubleValue() < 0) {
-//      sdr[channel][row + 1][baseSDR.length] = 1;
-//    } else {
-//      sdr[channel][row + 1][baseSDR.length] = 0;
-//    }
-//
-//    if (base < 0) {
-//      sdr[channel][row + 1][baseSDR.length + 1] = 1;
-//    } else {
-//      sdr[channel][row + 1][baseSDR.length + 1] = 0;
-//    }
-
   }
 
-  public int[] getArrayFromDictionary(String word) {
-    if (getDictionary().containsKey(word)) {
-      return getDictionary().get(word);
+  public int[] getArrayFromWords(String word) {
+    if (getDictionary().getWords().containsKey(word)) {
+      return getDictionary().getWords().get(word);
     } else {
-      int[] value = generateContent(columns, false, getDictionary(), new HashMap<>());
-      getDictionary().put(word, value);
-      return value;
+      int[] wordSDR = generateWordContent(columns, getDictionary().getWords());
+      getDictionary().getWords().put(word, wordSDR);
+      return wordSDR;
     }
   }
-
 
   public int[] getArrayFromValues(Integer value, Integer length) {
-    if (getValues().containsKey(value)) {
-      return getValues().get(value);
+    if (getDictionary().getValues().containsKey(value)) {
+      return getDictionary().getValues().get(value);
     } else {
-      int[] arrayValue = generateContent(length, true, new HashMap<>(), getValues());
-      getValues().put(value, arrayValue);
-      return arrayValue;
+      int[] valueSDR = generateNumericContent(length, getDictionary().getValues());
+      getDictionary().getValues().put(value, valueSDR);
+      return valueSDR;
     }
   }
 
-  private int[] generateContent(int length, boolean isValue, Map<String, int[]> dictionary,
-      Map<Integer, int[]> values) {
+  public int[] getArrayFromBaseValues(Integer base, Integer length) {
+    if (getDictionary().getBaseValues().containsKey(base)) {
+      return getDictionary().getBaseValues().get(base);
+    } else {
+      int[] baseSDR = generateNumericContent(length, getDictionary().getBaseValues());
+      getDictionary().getBaseValues().put(base, baseSDR);
+      return baseSDR;
+    }
+  }
+
+  public int[] getArrayFromSignalValues(Integer signal, Integer length) {
+    if (getDictionary().getSignalValues().containsKey(signal)) {
+      return getDictionary().getSignalValues().get(signal);
+    } else {
+
+      int[] signalSDR = new int[length];
+      for (int i = 0; i < length; i++) {
+        signalSDR[i] = signal;
+      }
+
+      getDictionary().getSignalValues().put(signal, signalSDR);
+      return signalSDR;
+    }
+  }
+
+
+  private int[] generateWordContent(int length, Map<String, int[]> map) {
 
     boolean retry = true;
 
     while (retry) {
-      int[] value = generateValue(length, isValue);
+      int[] value = generateSDR(length);
 
-      retry = isValue ? values.entrySet().stream()
-          .filter(entry -> entry.getValue().length == length)
-          .filter(entry -> compareValue(entry.getValue(), value))
-          .collect(Collectors.toList()).size() > 0 :
-
-          dictionary.entrySet().stream()
+      retry = map.entrySet().stream()
               .filter(entry -> entry.getValue().length == length)
-              .filter(entry -> compareValue(entry.getValue(), value))
-              .collect(Collectors.toList()).size() > 0;
+              .filter(entry -> compareSDR(entry.getValue(), value))
+              .collect(Collectors.toList()).size() > 0 ;
 
       if (!retry) {
         return value;
       }
     }
 
-    return initializeValue(new int[length], getDefaultValue());
+    return initializeSDR(new int[length], getDefaultValue());
+  }
+
+  private int[] generateNumericContent(int length, Map<Integer, int[]> map) {
+
+    boolean retry = true;
+
+    while (retry) {
+      int[] value = generateSDR(length);
+
+      retry = map.entrySet().stream()
+          .filter(entry -> entry.getValue().length == length)
+          .filter(entry -> compareSDR(entry.getValue(), value))
+          .collect(Collectors.toList()).size() > 0 ;
+
+      if (!retry) {
+        return value;
+      }
+    }
+
+    return initializeSDR(new int[length], getDefaultValue());
   }
 
 
-  private int[] generateValue(int length, boolean isRandom) {
+  private int[] generateSDR(int length) {
 
     Random random = new Random();
-    int[] possibilities = new int[]{2,3,4,5};
 
-    int w = isRandom? possibilities[random.nextInt(length/2)] : length / 2;
+    int w = length / 2;
 
     int[] value = new int[length];
 
@@ -360,14 +391,14 @@ public class SDRIdeaSerializer {
 
 
 
-  private int[] initializeValue(int[] value, int defaultValue) {
+  private int[] initializeSDR(int[] value, int defaultValue) {
     for (int i = 0; i < value.length; i++) {
       value[i] = defaultValue;
     }
     return value;
   }
 
-  private boolean compareValue(int[] newValue, int[] value) {
+  private boolean compareSDR(int[] newValue, int[] value) {
 
     if (newValue.length == value.length) {
 
@@ -418,19 +449,11 @@ public class SDRIdeaSerializer {
     this.activeValue = activeValue;
   }
 
-  public Map<String, int[]> getDictionary() {
+  public Dictionary getDictionary() {
     return dictionary;
   }
 
-  public void setDictionary(Map<String, int[]> dictionary) {
+  public void setDictionary(Dictionary dictionary) {
     this.dictionary = dictionary;
-  }
-
-  public Map<Integer, int[]> getValues() {
-    return values;
-  }
-
-  public void setValues(Map<Integer, int[]> values) {
-    this.values = values;
   }
 }

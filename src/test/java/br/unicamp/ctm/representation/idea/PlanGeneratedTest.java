@@ -1,6 +1,7 @@
 package br.unicamp.ctm.representation.idea;
 
 import br.unicamp.ctm.representation.idea.model.PlanGeneratedSample;
+import br.unicamp.ctm.representation.model.Dictionary;
 import br.unicamp.ctm.representation.model.SDRIdea;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -16,25 +17,19 @@ import org.junit.Test;
 public class PlanGeneratedTest {
 
   private SDRIdeaDeserializer sdrIdeaDeserializer;
-  private Map<String, int[]> dictionary;
-  private Map<Integer, int[]> values;
+
+  private Dictionary dictionary;
   private Gson gson;
 
   @Before
   public void setup() throws FileNotFoundException {
-
-    File valuesFile = new File("./src/test/resources/values.json");
     File dictionaryFile  = new File("./src/test/resources/dictionary.json");
 
     gson = new Gson();
 
-    Type typeValues = new TypeToken<Map<Integer, int[]>>(){}.getType();
-    Type typeDictionary = new TypeToken<Map<String, int[]>>(){}.getType();
+    dictionary = gson.fromJson(new FileReader(dictionaryFile), Dictionary.class);
 
-    dictionary = gson.fromJson(new FileReader(dictionaryFile), typeDictionary);
-    values = gson.fromJson(new FileReader(valuesFile), typeValues);
-
-    sdrIdeaDeserializer = new SDRIdeaDeserializer(dictionary, values);
+    sdrIdeaDeserializer = new SDRIdeaDeserializer(dictionary);
   }
 
   @Test

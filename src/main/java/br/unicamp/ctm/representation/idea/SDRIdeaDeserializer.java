@@ -10,25 +10,23 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import br.unicamp.ctm.representation.model.Dictionary;
 
 public class SDRIdeaDeserializer {
 
     private boolean toRaw;
     private ValueValidation valueValidation;
-    private Map<String, int[]> dictionary;
-    private Map<Integer, int[]> values;
+    private Dictionary dictionary;
 
-    public SDRIdeaDeserializer(Map<String, int[]> dictionary, Map<Integer, int[]> values) {
+    public SDRIdeaDeserializer(Dictionary dictionary) {
         this.valueValidation = new ValueValidation();
         this.setDictionary(dictionary);
-        this.setValues(values);
         this.toRaw = false;
     }
 
-    public SDRIdeaDeserializer(Map<String, int[]> dictionary, Map<Integer, int[]> values, boolean toRaw) {
+    public SDRIdeaDeserializer(Dictionary dictionary, boolean toRaw) {
         this.valueValidation = new ValueValidation();
         this.setDictionary(dictionary);
-        this.setValues(values);
         this.toRaw = toRaw;
     }
 
@@ -164,7 +162,7 @@ public class SDRIdeaDeserializer {
     }
 
     private String extractWord(int[][] sdrChannel, int row) {
-        Optional<Entry<String, int[]>> wordOptional = getDictionary().entrySet().stream()
+        Optional<Entry<String, int[]>> wordOptional = getDictionary().getWords().entrySet().stream()
                 .filter(entry -> valueValidation.compareValue(entry.getValue(), sdrChannel[row])).findFirst();
 
         return wordOptional.isPresent() ? wordOptional.get().getKey() : "";
@@ -214,30 +212,41 @@ public class SDRIdeaDeserializer {
     private Object extractValueSDR(int[][] sdrChannel, int row, Class clazz) {
 
         int length = sdrChannel[row].length;
-        int range = length / 4;
+        int range = length / 2;
+
+        int offset = 0;
+        int interval = 0;
 
         String valueString = "";
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 3; i++) {
 
-            int[] valueSDR = buildSDR(range, sdrChannel[row], i);
+            int[] valueSDR = buildSDR(range, sdrChannel[row+offset], interval);
 
-            Optional<Entry<Integer, int[]>> valueOptional = getValues().entrySet().stream()
+            Optional<Entry<Integer, int[]>> valueOptional = getDictionary().getValues().entrySet().stream()
                     .filter(entry -> valueValidation.compareValue(entry.getValue(), valueSDR)).findFirst();
 
             if (valueOptional.isPresent()) {
                 valueString += valueOptional.get().getKey();
             }
 
-            if (i == 0)
+            if (i == 0) {
                 valueString += ".";
+            }
+
+            if((i + 1) * range >= length) {
+                offset++;
+                interval = 0;
+            } else {
+                interval++;
+            }
         }
 
-        if (valueString.length() == 1 || valueString.isEmpty())
-            return 0d;
+        if (valueString.length() == 1 || valueString.isEmpty() || valueString.equals("0.00")) {
+            return getValueAccordingType(0, clazz);
+        }
 
-        int[] baseSDR = buildSDR(range, sdrChannel[row + 1], 0);
-
-        Optional<Entry<Integer, int[]>> baseOptional = getValues().entrySet().stream()
+        int[] baseSDR = buildSDR(range/2, sdrChannel[row + 1], 2);
+        Optional<Entry<Integer, int[]>> baseOptional = getDictionary().getBaseValues().entrySet().stream()
                 .filter(entry -> valueValidation.compareValue(entry.getValue(), baseSDR)).findFirst();
 
         int base = 0;
@@ -246,9 +255,8 @@ public class SDRIdeaDeserializer {
             base = baseOptional.get().getKey();
         }
 
-        int[] signalValueSDR = buildSDR(range, sdrChannel[row + 1], 1);
-
-        Optional<Entry<Integer, int[]>> signalValueOptional = getValues().entrySet().stream()
+        int[] signalValueSDR = buildSDR(range/4, sdrChannel[row + 1], 6);
+        Optional<Entry<Integer, int[]>> signalValueOptional = getDictionary().getSignalValues().entrySet().stream()
                 .filter(entry -> valueValidation.compareValue(entry.getValue(), signalValueSDR)).findFirst();
 
         int valueSignal = 0;
@@ -257,9 +265,9 @@ public class SDRIdeaDeserializer {
             valueSignal = signalValueOptional.get().getKey() == 1? -1 : 1;
         }
 
-        int[] signalBaseValueSDR = buildSDR(range, sdrChannel[row + 1], 2);
+        int[] signalBaseValueSDR = buildSDR(range/4, sdrChannel[row + 1], 7);
 
-        Optional<Entry<Integer, int[]>> signalBaseValueOptional = getValues().entrySet().stream()
+        Optional<Entry<Integer, int[]>> signalBaseValueOptional = getDictionary().getSignalValues().entrySet().stream()
                 .filter(entry -> valueValidation.compareValue(entry.getValue(), signalBaseValueSDR)).findFirst();
 
         int baseSignal = 0;
@@ -268,24 +276,9 @@ public class SDRIdeaDeserializer {
             baseSignal = signalBaseValueOptional.get().getKey() == 1? -1 : 1;
         }
 
-
-//        int valueSignal = sdrChannel[row + 1][range] * -1 == 0 ? 1 : -1;
-//        int baseSignal = sdrChannel[row + 1][range + 1] * -1 == 0 ? 1 : -1;
-
         Number number = Double.parseDouble(valueString) * Math.pow(10, base * baseSignal) * valueSignal;
 
-        if (clazz == Integer.class)
-            return number.intValue();
-        else if (clazz == Float.class)
-            return number.floatValue();
-        else if (clazz == Short.class)
-            return number.shortValue();
-        else if (clazz == Byte.class)
-            return number.byteValue();
-        else if (clazz == Double.class)
-            return number.doubleValue();
-        else if (clazz == Long.class) ;
-        return number.longValue();
+        return getValueAccordingType(number, clazz);
     }
 
     private int[] buildSDR(int range, int[] sdrRow, int interval) {
@@ -298,22 +291,6 @@ public class SDRIdeaDeserializer {
         return sdr;
     }
 
-    public Map<String, int[]> getDictionary() {
-        return dictionary;
-    }
-
-    public void setDictionary(Map<String, int[]> dictionary) {
-        this.dictionary = dictionary;
-    }
-
-    public Map<Integer, int[]> getValues() {
-        return values;
-    }
-
-    public void setValues(Map<Integer, int[]> values) {
-        this.values = values;
-    }
-
     public boolean isNullableSDR(int[][] sdr) {
         int sumCheck = 0;
         for (int i = 0; i < sdr.length; i++) {
@@ -323,5 +300,13 @@ public class SDRIdeaDeserializer {
         }
 
         return sumCheck <= 10;
+    }
+
+    public Dictionary getDictionary() {
+        return dictionary;
+    }
+
+    public void setDictionary(Dictionary dictionary) {
+        this.dictionary = dictionary;
     }
 }

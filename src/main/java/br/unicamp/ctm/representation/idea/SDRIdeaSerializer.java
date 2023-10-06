@@ -5,11 +5,11 @@ import br.unicamp.ctm.representation.model.SDRIdea;
 import br.unicamp.ctm.representation.validation.ValueValidation;
 import org.apache.commons.lang.StringUtils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import br.unicamp.ctm.representation.model.Dictionary;
 
 public class SDRIdeaSerializer {
@@ -324,94 +324,49 @@ public class SDRIdeaSerializer {
     }
   }
 
-
   private int[] generateWordContent(int length, Map<String, int[]> map) {
-
-    boolean retry = true;
-
-    while (retry) {
-      int[] value = generateSDR(length);
-
-      retry = map.entrySet().stream()
-              .filter(entry -> entry.getValue().length == length)
-              .filter(entry -> compareSDR(entry.getValue(), value))
-              .collect(Collectors.toList()).size() > 0 ;
-
-      if (!retry) {
-        return value;
-      }
-    }
-
-    return initializeSDR(new int[length], getDefaultValue());
+    return generateContentMaxHammingDistance(map.entrySet().stream().map(Map.Entry::getValue).collect(Collectors.toList()), length, length/2);
   }
 
   private int[] generateNumericContent(int length, Map<Integer, int[]> map) {
+    return generateContentMaxHammingDistance(map.entrySet().stream().map(Map.Entry::getValue).collect(Collectors.toList()), length, length/2);
+  }
 
-    boolean retry = true;
-
-    while (retry) {
-      int[] value = generateSDR(length);
-
-      retry = map.entrySet().stream()
-          .filter(entry -> entry.getValue().length == length)
-          .filter(entry -> compareSDR(entry.getValue(), value))
-          .collect(Collectors.toList()).size() > 0 ;
-
-      if (!retry) {
-        return value;
+  public int[] generateContentMaxHammingDistance(List<int[]> existingArrays, int lengthWords, int activeBitsInWords) {
+    int[] newArray = new int[lengthWords];
+    int numOnes = 0;
+    while (numOnes < ThreadLocalRandom.current().nextInt(activeBitsInWords/2, activeBitsInWords)) {
+      int indexToSet = ThreadLocalRandom.current().nextInt(lengthWords);
+      if (newArray[indexToSet] == 0) {
+        newArray[indexToSet] = 1;
+        numOnes++;
       }
     }
 
-    return initializeSDR(new int[length], getDefaultValue());
-  }
+    if(existingArrays.isEmpty())
+      return newArray;
 
+    List<Integer> distances = existingArrays.parallelStream()
+            .mapToInt(array -> (int) IntStream.range(0, lengthWords).filter(i -> newArray[i] != array[i]).count())
+            .boxed()
+            .collect(Collectors.toList());
 
-  private int[] generateSDR(int length) {
+    while (Collections.min(distances) <= 1) {
+      int indexToFlip = ThreadLocalRandom.current().nextInt(lengthWords);
+      newArray[indexToFlip] = 1 - newArray[indexToFlip];
+      distances = existingArrays.parallelStream()
+              .mapToInt(array -> (int) IntStream.range(0, lengthWords).filter(i -> newArray[i] != array[i]).count())
+              .boxed()
+              .collect(Collectors.toList());
+    }
 
-    Random random = new Random();
-
-    int w = length / 2;
-
-    int[] value = new int[length];
-
-    for (int i = 0; i < w; i++) {
-      boolean retry = true;
-
-      while (retry) {
-        int index = random.nextInt(length);
-        if (value[index] != 1) {
-          value[index] = getActiveValue();
-          retry = false;
-        }
+    for (int[] array : existingArrays) {
+      if (Arrays.equals(newArray, array)) {
+        return generateContentMaxHammingDistance(existingArrays, lengthWords, activeBitsInWords);
       }
     }
 
-    return value;
-  }
-
-
-
-  private int[] initializeSDR(int[] value, int defaultValue) {
-    for (int i = 0; i < value.length; i++) {
-      value[i] = defaultValue;
-    }
-    return value;
-  }
-
-  private boolean compareSDR(int[] newValue, int[] value) {
-
-    if (newValue.length == value.length) {
-
-      for (int i = 0; i < newValue.length; i++) {
-        if (newValue[i] != value[i]) {
-          return false;
-        }
-      }
-
-      return true;
-    }
-
-    return false;
+    return newArray;
   }
 
   private Class getListClassAsArray(Class clazz) {

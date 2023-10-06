@@ -25,6 +25,7 @@ public class GenerateDataFromIdeaSDRTest {
 
   private static Dictionary dictionary;
   private static SDRIdeaSerializer sdrIdeaSerializer;
+  private static SDRIdeaSerializer sdrIdeaSerializerControl;
 
   private static SDRIdeaDeserializer sdrIdeaDeserializer;
 
@@ -39,7 +40,7 @@ public class GenerateDataFromIdeaSDRTest {
     else
       dictionary = new Dictionary();
 
-    sdrIdeaSerializer = new SDRIdeaSerializer(16,32,32);
+    sdrIdeaSerializer = new SDRIdeaSerializer(15,32,32);
     sdrIdeaSerializer.setDictionary(dictionary);
 
     sdrIdeaDeserializer = new SDRIdeaDeserializer(dictionary);
@@ -56,8 +57,12 @@ public class GenerateDataFromIdeaSDRTest {
     else
       dictionary = new Dictionary();
 
-    sdrIdeaSerializer = new SDRIdeaSerializer(6,32,32);
+    sdrIdeaSerializer = new SDRIdeaSerializer(5,32,32);
     sdrIdeaSerializer.setDictionary(dictionary);
+
+    sdrIdeaSerializerControl = new SDRIdeaSerializer(8,32,32);
+    sdrIdeaSerializerControl.setDictionary(dictionary);
+
 
     sdrIdeaDeserializer = new SDRIdeaDeserializer(dictionary);
 
@@ -68,32 +73,62 @@ public class GenerateDataFromIdeaSDRTest {
     int j = 0;
 
     Gson gson = new Gson();
-
     List<SDRDataSample> dataSamples = new ArrayList<>();
 
-    for (int k = 0; k <= 63; k++) {
+    for (int k = 0; k < 33; k++) {
 
-      File planFile = new File("/opt/repository/dataTrainingIdea/planTransport"+k+".json");
-      File goalFile = new File("/opt/repository/dataTrainingIdea/goalTransport"+k+".json");
+      File planFile = new File("/opt/repository/dataTrainingIdea/step/stepIdeaFile"+k+".json");
+      File goalFile = new File("/opt/repository/dataTrainingIdea/step/goalIdeaFile"+k+".json");
 
       Idea[] planIdeas = gson.fromJson(new FileReader(planFile), Idea[].class);
       Idea[] goalIdeas = gson.fromJson(new FileReader(goalFile), Idea[].class);
 
       for (int i = 0; i < planIdeas.length; i++) {
 
-        resetIdeaIds(planIdeas[i], -1);
+        //resetIdeaIds(planIdeas[i], -1);
         resetIdeaIds(goalIdeas[i], -1);
+
+        //if(((List)goalIdeas[i].getValue()).size() == 0)
+        //  goalIdeas[i].setValue("");
+
+        //List controlList = ((List) goalIdeas[i].getValue()).subList(0, ((List) goalIdeas[i].getValue()).size());
+
+        /*int[] xc = new int[controlList.size()];
+        for (int t = 0; t < controlList.size(); t++) {
+          xc[t] = ((Double) controlList.get(t)).intValue();
+        }*/
+
+        //List<Double> goalControl = new ArrayList<>();
+        //goalControl.add(((Double) ((List)goalIdeas[i].getValue()).get(0)).doubleValue());
+        //goalControl.add(((Double) ((List)goalIdeas[i].getValue()).get(1)).doubleValue());
+
+        //goalIdeas[i].setValue("");
+
+        Idea lastActionSteps = goalIdeas[i].getL()
+                .remove(goalIdeas[i].getL().size()-1);
+
+//        Idea lastActionStep = goalIdeas[i].getL()
+//                .get(goalIdeas[i].getL().size()-1)
+//                .getL().remove(goalIdeas[i].getL()
+//                        .get(goalIdeas[i].getL().size()-1)
+//                        .getL().size() - 1);
 
         SDRIdea planSDRIdea = sdrIdeaSerializer.serialize(planIdeas[i]);
         SDRIdea goalSDRIdea = sdrIdeaSerializer.serialize(goalIdeas[i]);
 
-        int[][][][] x = new int[1][][][];
+        SDRIdea targetSDRIdea = sdrIdeaSerializerControl.serialize(lastActionSteps);
 
-        x[0] = goalSDRIdea.getSdr();
+        int[][][][] goal = new int[1][][][];
+        goal[0] = goalSDRIdea.getSdr();
 
-        dataSamples.add(new SDRDataSample(x, extractSDRChannel(planSDRIdea.getSdr(), 0, 32, 32)));
+        int[][][][] target = new int[1][][][];
+        target[0] = targetSDRIdea.getSdr();
 
-        if (dataSamples.size() == 5000) {
+        dataSamples.add(new SDRDataSample(goal, target, extractSDRChannel(planSDRIdea.getSdr(), 0, 32, 32)));
+
+        //dataSamples.add(new SDRDataSample(x, extractSDRChannel(planSDRIdea.getSdr(), 0, 32, 32), xc));
+
+        if (dataSamples.size() == 100) {
           dataSamples = saveDataSamplesInFile(j, gson, dataSamples);
           j++;
         }
@@ -166,7 +201,7 @@ public class GenerateDataFromIdeaSDRTest {
         x[0] = currentStateSDRIdea.getSdr();
 //        x[1] = goalSDRIdea.getSdr();
 
-        dataSamples.add(new SDRDataSample(x, planSDRIdea.getSdr()));
+        //dataSamples.add(new SDRDataSample(x, planSDRIdea.getSdr(), new int[1]));
 
         if (dataSamples.size() == 100) {
           System.out.println("Saving dataTrainingShortSDR_" + j + ".json!");

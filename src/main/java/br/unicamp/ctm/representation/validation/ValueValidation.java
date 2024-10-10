@@ -15,6 +15,10 @@ public class ValueValidation {
         || object instanceof List;
   }
 
+  public static boolean isList(Class clazz) {
+    return clazz.getCanonicalName().equals(List.class.getCanonicalName());
+  }
+
   public static boolean isArray(Class clazz) {
     return clazz.getCanonicalName().equals(int[].class.getCanonicalName())
         || clazz.getCanonicalName().equals(double[].class.getCanonicalName())
@@ -29,6 +33,10 @@ public class ValueValidation {
         || clazz.getCanonicalName().equals(Short[].class.getCanonicalName())
         || clazz.getCanonicalName().equals(Boolean[].class.getCanonicalName())
         || clazz.getCanonicalName().equals(String[].class.getCanonicalName());
+  }
+
+  public static boolean isStringArray(Class clazz) {
+    return clazz.getCanonicalName().equals(String[].class.getCanonicalName());
   }
 
   public static boolean isPrimitive(Object object) {

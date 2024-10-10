@@ -14,8 +14,8 @@ public class SDRIdeaSerializerTest {
   @Before
   public void setup() {
 
-    sdrIdeaSerializer = new SDRIdeaSerializer(10, 32, 32);
-    sdrIdeaDeserializer = new SDRIdeaDeserializer(sdrIdeaSerializer.getDictionary());
+    sdrIdeaSerializer = new SDRIdeaSerializer(10, 32, 32, false, true, 3, 4);
+    sdrIdeaDeserializer = new SDRIdeaDeserializer(sdrIdeaSerializer.getDictionary(), 3, 4);
   }
 
   private Idea initialize() {

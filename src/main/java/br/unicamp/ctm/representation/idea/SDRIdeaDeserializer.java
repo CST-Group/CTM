@@ -18,10 +18,21 @@ public class SDRIdeaDeserializer {
     private ValueValidation valueValidation;
     private Dictionary dictionary;
 
+    private int positiveSignalValue = 0;
+    private int negativeSignalValue = 1;
+
     public SDRIdeaDeserializer(Dictionary dictionary) {
         this.valueValidation = new ValueValidation();
         this.setDictionary(dictionary);
         this.toRaw = false;
+    }
+
+    public SDRIdeaDeserializer(Dictionary dictionary, int positiveSignalValue, int negativeSignalValue) {
+        this.valueValidation = new ValueValidation();
+        this.setDictionary(dictionary);
+        this.toRaw = false;
+        this.positiveSignalValue = positiveSignalValue;
+        this.negativeSignalValue = negativeSignalValue;
     }
 
     public SDRIdeaDeserializer(Dictionary dictionary, boolean toRaw) {
@@ -262,7 +273,7 @@ public class SDRIdeaDeserializer {
         int valueSignal = 0;
 
         if (signalValueOptional.isPresent()) {
-            valueSignal = signalValueOptional.get().getKey() == 1? -1 : 1;
+            valueSignal = signalValueOptional.get().getKey() == this.negativeSignalValue? -1 : 1;
         }
 
         int[] signalBaseValueSDR = buildSDR(range/4, sdrChannel[row + 1], 7);
@@ -273,7 +284,7 @@ public class SDRIdeaDeserializer {
         int baseSignal = 0;
 
         if (signalBaseValueOptional.isPresent()) {
-            baseSignal = signalBaseValueOptional.get().getKey() == 1? -1 : 1;
+            baseSignal = signalBaseValueOptional.get().getKey() == this.negativeSignalValue? -1 : 1;
         }
 
         Number number = Double.parseDouble(valueString) * Math.pow(10, base * baseSignal) * valueSignal;

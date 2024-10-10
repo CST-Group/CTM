@@ -1,26 +1,20 @@
 package br.unicamp.ctm.representation.idea;
 
-import br.unicamp.ctm.representation.idea.model.DataSample;
+import br.unicamp.ctm.representation.idea.model.PlanDataSample;
 import br.unicamp.ctm.representation.idea.model.SDRDataSample;
+import br.unicamp.ctm.representation.idea.model.TransformerPlanDataSample;
 import br.unicamp.ctm.representation.model.Dictionary;
-import br.unicamp.ctm.representation.model.MatrixIdea;
 import br.unicamp.ctm.representation.model.SDRIdea;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-import java.io.*;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 
-public class GenerateDataFromIdeaSDRTest {
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class TransformerGenerateDataFromIdeaSDRFromPlanTest {
 
 
   private static Dictionary dictionary;
@@ -33,14 +27,14 @@ public class GenerateDataFromIdeaSDRTest {
   public void setup() throws FileNotFoundException {
     Gson gson = new Gson();
 
-    File dictionaryFile = new File("/opt/repository/dataPlanSDR/dictionary.json");
+    File dictionaryFile = new File("/opt/repository/dataTrainingShortSDR/dictionary.json");
 
     if(dictionaryFile.exists())
       dictionary = gson.fromJson(new FileReader(dictionaryFile), Dictionary.class);
     else
       dictionary = new Dictionary();
 
-    sdrIdeaSerializer = new SDRIdeaSerializer(15,32,32);
+    sdrIdeaSerializer = new SDRIdeaSerializer(20,32,32);
     sdrIdeaSerializer.setDictionary(dictionary);
 
     sdrIdeaDeserializer = new SDRIdeaDeserializer(dictionary);
@@ -50,74 +44,74 @@ public class GenerateDataFromIdeaSDRTest {
 
     Gson gson = new Gson();
 
-    File dictionaryFile = new File("/opt/repository/dataTrainingShortSDR/dictionary.json");
+    File dictionaryFile = new File("/opt/repository/dataPlanSDR/dictionary.json");
 
     if(dictionaryFile.exists())
       dictionary = gson.fromJson(new FileReader(dictionaryFile), Dictionary.class);
     else
       dictionary = new Dictionary();
 
-    sdrIdeaSerializer = new SDRIdeaSerializer(10,32,32);
+    //sdrIdeaSerializer = new SDRIdeaSerializer(20,32,32, false, true, 3, 4);
+    sdrIdeaSerializer = new SDRIdeaSerializer(20,32,32);
     sdrIdeaSerializer.setDictionary(dictionary);
 
-    sdrIdeaSerializerControl = new SDRIdeaSerializer(8,32,32);
-    sdrIdeaSerializerControl.setDictionary(dictionary);
-
-
-    sdrIdeaDeserializer = new SDRIdeaDeserializer(dictionary);
-
     testNewGenerateDataFile();
+
+    System.out.println("Saving dictionary.json!");
+
+    FileWriter fileWriter = new FileWriter("/opt/repository/dataPlanSDR/dictionary.json");
+    BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+
+    bufferedWriter.write(gson.toJson(sdrIdeaSerializer.getDictionary()));
+    bufferedWriter.close();
+
+    System.out.println("dictionary.json Saved!");
+
   }
 
   public static void testNewGenerateDataFile() throws Exception {
     int j = 0;
 
     Gson gson = new Gson();
-    List<SDRDataSample> dataSamples = new ArrayList<>();
+    List<TransformerPlanDataSample> dataSamples = new ArrayList<>();
 
-    for (int k = 0; k < 35; k++) {
+    for (int k = 0; k < 599; k++) {
 
-      File planFile = new File("/opt/repository/dataTrainingIdea/step/stepIdeaFile"+k+".json");
-      File goalFile = new File("/opt/repository/dataTrainingIdea/step/goalIdeaFile"+k+".json");
-
+      File planFile = new File("/opt/repository/dataTrainingIdea/plan/planIdeaFile"+k+".json");
       Idea[] planIdeas = gson.fromJson(new FileReader(planFile), Idea[].class);
+
+      File goalFile = new File("/opt/repository/dataTrainingIdea/goal/goalIdeaFile"+k+".json");
       Idea[] goalIdeas = gson.fromJson(new FileReader(goalFile), Idea[].class);
 
-      for (int i = 0; i < planIdeas.length; i++) {
-        //resetIdeaIds(planIdeas[i], -1);
-        resetIdeaIds(goalIdeas[i], -1);
+      for (int i = 0; i < goalIdeas.length; i++) {
+        Idea startIdeaPlan = new Idea("start", "");
+        startIdeaPlan.setId(0);
+        startIdeaPlan.add(planIdeas[i]);
 
-        List controlList = ((List) goalIdeas[i].getValue()).subList(0, ((List) goalIdeas[i].getValue()).size());
-
-        int[] control = new int[17];
-        for (int t = 0; t < controlList.size(); t++) {
-          control[t] = ((Double) controlList.get(t)).intValue();
+        for (int l = 0; l < planIdeas[i].getL().size(); l++) {
+          startIdeaPlan.add(planIdeas[i].getL().get(l));
         }
 
-        //List<Double> goalControl = new ArrayList<>();
-        //goalControl.add(((Double) ((List)goalIdeas[i].getValue()).get(0)).doubleValue());
-        //goalControl.add(((Double) ((List)goalIdeas[i].getValue()).get(1)).doubleValue());
+        //resetIdeaIds(goalIdeas[i], -1);
+        //resetIdeaIds(planIdeas[i], -1);
+        //resetIdeaIds(startIdea, -1);
 
-        //goalIdeas[i].setValue(((Double)((List) goalIdeas[i].getValue()).get(0)).doubleValue());
-        goalIdeas[i].setValue("");
-//        Idea lastActionSteps = goalIdeas[i].getL()
-//                .remove(goalIdeas[i].getL().size()-1);
-
-//        Idea lastActionStep = goalIdeas[i].getL()
-//                .get(goalIdeas[i].getL().size()-1)
-//                .getL().remove(goalIdeas[i].getL()
-//                        .get(goalIdeas[i].getL().size()-1)
-//                        .getL().size() - 1);
-
-        SDRIdea planSDRIdea = sdrIdeaSerializer.serialize(planIdeas[i]);
         SDRIdea goalSDRIdea = sdrIdeaSerializer.serialize(goalIdeas[i]);
+        SDRIdea planSDRIdea = sdrIdeaSerializer.serialize(startIdeaPlan);
+        SDRIdea targetSDRIdea  = sdrIdeaSerializer.serialize(startIdeaPlan);
 
-        int[][][][] goal = new int[1][][][];
-        goal[0] = goalSDRIdea.getSdr();
+        //removeLastSDR(targetSDRIdea);
 
-        dataSamples.add(new SDRDataSample(goal, extractSDRChannel(planSDRIdea.getSdr(), 0, 32, 32), control));
+        int[][][][] input = new int[1][][][];
+        input[0] = goalSDRIdea.getSdr();
 
-        //dataSamples.add(new SDRDataSample(x, extractSDRChannel(planSDRIdea.getSdr(), 0, 32, 32), xc));
+        int[][][][] target = new int[1][][][];
+        target[0] = targetSDRIdea.getSdr();
+
+        int[][][][] output = new int[1][][][];
+        output[0] = planSDRIdea.getSdr();
+
+        dataSamples.add(new TransformerPlanDataSample(input, target, output));
 
         if (dataSamples.size() == 100) {
           dataSamples = saveDataSamplesInFile(j, gson, dataSamples);
@@ -130,30 +124,51 @@ public class GenerateDataFromIdeaSDRTest {
       saveDataSamplesInFile(j, gson, dataSamples);
     }
 
-    System.out.println("Saving dictionary.json!");
+  }
 
-    FileWriter fileWriter = new FileWriter("/opt/repository/dataTrainingShortSDR/dictionary.json");
-    BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+  public static void removeLastSDR(SDRIdea targetSDRIdea) {
+    int[][][] sdr = targetSDRIdea.getSdr();
 
-    bufferedWriter.write(gson.toJson(sdrIdeaSerializer.getDictionary()));
-    bufferedWriter.close();
+    for (int i = sdr.length - 1; i >= 0; i--) {
+      if(sumSDR(sdr[i]) > 0) {
+        setSDRToZero(sdr[i]);
+        return;
+      }
+    }
+  }
 
-    System.out.println("dictionary.json Saved!");
+  private static void setSDRToZero(int[][] sdr) {
+    for(int j = 0; j < sdr.length; j++) {
+      for(int k = 0; k < sdr[j].length; k++) {
+          sdr[j][k] = 0;
+      }
+    }
+  }
+
+  public static int sumSDR(int[][] sdr) {
+    int sum = 0;
+
+    for (int j = 0; j < sdr.length; j++) {
+      for (int k = 0; k < sdr[j].length; k++) {
+        sum += sdr[j][k];
+      }
+    }
+    return sum;
   }
 
   @NotNull
-  private static List<SDRDataSample> saveDataSamplesInFile(int j, Gson gson, List<SDRDataSample> dataSamples) throws IOException {
-    System.out.println("Saving dataTrainingShortSDR_" + j + ".json!");
+  private static List<TransformerPlanDataSample> saveDataSamplesInFile(int j, Gson gson, List<TransformerPlanDataSample> dataSamples) throws IOException {
+    System.out.println("Saving dataPlanSDR_" + j + ".json!");
     String json = gson.toJson(dataSamples);
 
     FileWriter fileWriter = new FileWriter(
-            "/opt/repository/dataTrainingShortSDR/dataTrainingShortSDR_" + j + ".json");
+            "/opt/repository/dataPlanSDR/dataPlanSDR_" + j + ".json");
     BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 
     bufferedWriter.write(json);
     bufferedWriter.close();
 
-    System.out.println("dataTrainingShortSDR_" + j + ".json Saved!");
+    System.out.println("dataPlanSDR_" + j + ".json Saved!");
 
     dataSamples = new ArrayList<>();
     return dataSamples;

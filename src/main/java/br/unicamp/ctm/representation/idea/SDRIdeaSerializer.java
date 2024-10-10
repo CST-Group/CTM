@@ -19,6 +19,11 @@ public class SDRIdeaSerializer {
   private int rows;
   private int columns;
   private int defaultValue;
+  private boolean randomize;
+  private int positiveSignalValue = 0;
+  private int negativeSignalValue = 1;
+
+  private int deactivateValue;
   private int activeValue;
   private ValueConverter<Integer> valueConverter;
   private Dictionary dictionary;
@@ -30,6 +35,7 @@ public class SDRIdeaSerializer {
     this.columns = columns;
     this.channels = channels;
     this.setDefaultValue(0);
+    this.setDeactivateValue(0);
     this.setActiveValue(1);
     this.valueConverter = new ValueConverter<>();
     this.dictionary = new Dictionary(new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
@@ -41,7 +47,23 @@ public class SDRIdeaSerializer {
     this.columns = columns;
     this.channels = channels;
     this.setDefaultValue(0);
+    this.setDeactivateValue(0);
     this.setActiveValue(1);
+    this.valueConverter = new ValueConverter<>();
+    this.dictionary = new Dictionary(new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
+    this.toRaw = false;
+  }
+
+  public SDRIdeaSerializer(int channels, int rows, int columns, boolean toRaw, boolean randomize, int positiveSignalValue, int negativeSignalValue) {
+    this.rows = rows;
+    this.columns = columns;
+    this.channels = channels;
+    this.setDefaultValue(0);
+    this.setDeactivateValue(0);
+    this.setActiveValue(1);
+    this.positiveSignalValue = positiveSignalValue;
+    this.negativeSignalValue = negativeSignalValue;
+    this.randomize = randomize;
     this.valueConverter = new ValueConverter<>();
     this.dictionary = new Dictionary(new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
     this.toRaw = false;
@@ -51,6 +73,7 @@ public class SDRIdeaSerializer {
     this.rows = rows;
     this.columns = columns;
     this.channels = channels;
+    this.setDeactivateValue(0);
     this.setDefaultValue(defaultValue);
     this.setActiveValue(activeValue);
     this.valueConverter = new ValueConverter<>();
@@ -58,10 +81,23 @@ public class SDRIdeaSerializer {
     this.toRaw = false;
   }
 
-  public SDRIdeaSerializer(int channels, int rows, int columns, int defaultValue, int activeValue, Dictionary dictionary) {
+  public SDRIdeaSerializer(int channels, int rows, int columns, int defaultValue, int activeValue, int deactivateValue) {
     this.rows = rows;
     this.columns = columns;
     this.channels = channels;
+    this.setDeactivateValue(deactivateValue);
+    this.setDefaultValue(defaultValue);
+    this.setActiveValue(activeValue);
+    this.valueConverter = new ValueConverter<>();
+    this.dictionary = new Dictionary(new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
+    this.toRaw = false;
+  }
+
+  public SDRIdeaSerializer(int channels, int rows, int columns, int defaultValue, int activeValue, int deactivateValue, Dictionary dictionary) {
+    this.rows = rows;
+    this.columns = columns;
+    this.channels = channels;
+    this.setDeactivateValue(deactivateValue);
     this.setDefaultValue(defaultValue);
     this.setActiveValue(activeValue);
     this.valueConverter = new ValueConverter<>();
@@ -172,7 +208,7 @@ public class SDRIdeaSerializer {
   }
 
   private void setNameValue(Idea idea, int[][][] sdr, int channel) {
-    if (idea.getName() != null && getArrayFromWords(idea.getName()) != null) {
+    if (idea.getName() != null) {
       setWord(sdr, channel, 4, getArrayFromWords(idea.getName()));
     }
   }
@@ -268,12 +304,12 @@ public class SDRIdeaSerializer {
       sdr[channel][row + 1][range+i] = baseSDR[i];
     }
 
-    int[] signalSDR = getArrayFromSignalValues(value.doubleValue() < 0? 1:0, range/4);
+    int[] signalSDR = getArrayFromSignalValues(value.doubleValue() < 0? this.negativeSignalValue:this.positiveSignalValue, range/4);
     for (int i = 0; i < signalSDR.length; i++) {
       sdr[channel][row + 1][range+baseSDR.length+i] = signalSDR[i];
     }
 
-    int[] baseSignalSDR = getArrayFromSignalValues(base < 0? 1:0, range/4);
+    int[] baseSignalSDR = getArrayFromSignalValues(base < 0? this.negativeSignalValue:this.positiveSignalValue, range/4);
     for (int i = 0; i < baseSignalSDR.length; i++) {
       sdr[channel][row + 1][range+baseSDR.length+signalSDR.length+i] = baseSignalSDR[i];
     }
@@ -325,11 +361,37 @@ public class SDRIdeaSerializer {
   }
 
   private int[] generateWordContent(int length, Map<String, int[]> map) {
-    return generateContentMaxHammingDistance(map.entrySet().stream().map(Map.Entry::getValue).collect(Collectors.toList()), length, length/2);
+    if(this.randomize)
+      return generateRandomContent(map.entrySet().stream().map(Map.Entry::getValue).collect(Collectors.toList()), length);
+    else
+      return generateContentMaxHammingDistance(map.entrySet().stream().map(Map.Entry::getValue).collect(Collectors.toList()), length, length/2);
   }
 
   private int[] generateNumericContent(int length, Map<Integer, int[]> map) {
-    return generateContentMaxHammingDistance(map.entrySet().stream().map(Map.Entry::getValue).collect(Collectors.toList()), length, length/2);
+    if(this.randomize)
+      return generateRandomContent(map.entrySet().stream().map(Map.Entry::getValue).collect(Collectors.toList()), length);
+    else
+      return generateContentMaxHammingDistance(map.entrySet().stream().map(Map.Entry::getValue).collect(Collectors.toList()), length, length/2);
+  }
+
+  private int[] generateRandomContent(List<int[]> existingArrays, int lengthWords) {
+    int[] newArray = new int[lengthWords];
+    Random random = new Random();
+
+    for (int i = 0; i < lengthWords; i++) {
+      newArray[i] = random.nextInt(5) + 5;
+    }
+
+    if(existingArrays.isEmpty())
+      return newArray;
+
+    for (int[] array : existingArrays) {
+      if (Arrays.equals(newArray, array)) {
+        return generateRandomContent(existingArrays, lengthWords);
+      }
+    }
+
+    return newArray;
   }
 
   public int[] generateContentMaxHammingDistance(List<int[]> existingArrays, int lengthWords, int activeBitsInWords) {
@@ -337,8 +399,8 @@ public class SDRIdeaSerializer {
     int numOnes = 0;
     while (numOnes < ThreadLocalRandom.current().nextInt(activeBitsInWords/2, activeBitsInWords)) {
       int indexToSet = ThreadLocalRandom.current().nextInt(lengthWords);
-      if (newArray[indexToSet] == 0) {
-        newArray[indexToSet] = 1;
+      if (newArray[indexToSet] == this.deactivateValue) {
+        newArray[indexToSet] = this.activeValue;
         numOnes++;
       }
     }
@@ -368,6 +430,8 @@ public class SDRIdeaSerializer {
 
     return newArray;
   }
+
+
 
   private Class getListClassAsArray(Class clazz) {
     if (clazz.equals(Double.class)) {
@@ -410,5 +474,13 @@ public class SDRIdeaSerializer {
 
   public void setDictionary(Dictionary dictionary) {
     this.dictionary = dictionary;
+  }
+
+  public int getDeactivateValue() {
+    return deactivateValue;
+  }
+
+  public void setDeactivateValue(int deactivateValue) {
+    this.deactivateValue = deactivateValue;
   }
 }
